@@ -1,0 +1,7 @@
+	   <risp:vehsearchtype>N</risp:vehsearchtype>
+	  </ns1:vehiclesearchparameters>
+        </ns1:parameters>
+      </ns1:searchrequest>
+    </ns1:RispRequest>
+  </soap:Body>
+</soap:Envelope>

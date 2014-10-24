@@ -1,0 +1,22 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <ns1:RispRequest xsi:schemaLocation="http://www.pito.org/westmidsregion/risp/messagingtypes messagingdatatypes.xsd" xmlns:risp="http://www.pito.org/westmidsregion/risp/basetypes" xmlns:ns1="http://www.pito.org/westmidsregion/risp/messagingtypes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <ns1:searchrequest>
+        <ns1:msgid>
+          <risp:unique_request_id>**uniqueRequestId**</risp:unique_request_id>
+          <risp:user_id>**userId**</risp:user_id>
+          <risp:terminal_id>**terminalId**</risp:terminal_id>
+          <risp:timestamp>**timestamp**</risp:timestamp>
+          <risp:force_no>22</risp:force_no>
+        </ns1:msgid>
+        <ns1:parameters>
+          <ns1:daterange>0</ns1:daterange>
+          <ns1:fsselection>
+            <risp:force>
+              <risp:force_id>22</risp:force_id>
+              <risp:sources>
+                <risp:source>ALL</risp:source>
+              </risp:sources>
+            </risp:force>
+          </ns1:fsselection>
+          <ns1:vehiclesearchparameters>

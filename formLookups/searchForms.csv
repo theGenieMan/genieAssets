@@ -1,0 +1,5 @@
+Form Name|one of these fields required|one of error message|required fields|required error message|Form Fields File
+NominalSearch|1,2,3,4,5,6,7,8,9,10|You must enter either Nominal Ref, PNC ID, CRO, Surname 1, Surname 2, Forename 1, Forename 2, Maiden Name or Nickname|none|none|nominalSearch.csv
+AddressSearch|1,2,3,4,5,6,7,8|You must enter either Postcode, Premise No, Flat, Premise Name, Street, District, Town or County|none|none|addressSearch.csv
+VehicleSearch|1,2,3,4,5,6,7,8|You must enter some search parameters|none|none|vehicleSearch.csv
+TelephoneSearch|1,2,3,4,5,22|You must enter a telephone number, phone type, airtime supplier, date or notes|none|none|telephoneSearch.csv

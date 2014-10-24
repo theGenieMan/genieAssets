@@ -1,0 +1,46 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <ns1:RispRequest xsi:schemaLocation="http://www.pito.org/westmidsregion/risp/messagingtypes messagingdatatypes.xsd" xmlns:risp="http://www.pito.org/westmidsregion/risp/basetypes" xmlns:ns1="http://www.pito.org/westmidsregion/risp/messagingtypes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <ns1:detailrequest>
+        <ns1:msgid>
+          <risp:unique_request_id>**uniqueRequestId**</risp:unique_request_id>
+          <risp:user_id>**userId**</risp:user_id>
+          <risp:terminal_id>**terminalId**</risp:terminal_id>
+          <risp:timestamp>**timestamp**</risp:timestamp>
+          <risp:force_no>22</risp:force_no>
+        </ns1:msgid>
+        <ns1:parameters>
+          <ns1:detrequest>
+            <ns1:searchresults>
+              <ns1:user_id>**userId**</ns1:user_id>
+              <ns1:force>**forceId**</ns1:force>
+              <ns1:source>**appRef**</ns1:source>
+              <ns1:sysid>**sysid**</ns1:sysid>
+              <ns1:phonesearchresult>
+                <risp:rec_id>
+                  <risp:app_ref>**appRef**</risp:app_ref>
+                  <risp:force_ref>**forceId**</risp:force_ref>
+                  <risp:sys_ref>**sysid**</risp:sys_ref>
+                </risp:rec_id>
+                <risp:house_number />
+                <risp:flat_number />
+                <risp:premise_name />
+                <risp:premise_no />
+                <risp:street />
+                <risp:district />
+                <risp:town />
+                <risp:county />
+                <risp:post_code />
+              </ns1:phonesearchresult>
+            </ns1:searchresults>
+            <ns1:detail_id>
+              <risp:app_ref>**appRef**</risp:app_ref>
+              <risp:force_ref>**forceId**</risp:force_ref>
+              <risp:sys_ref>**sysid**</risp:sys_ref>
+            </ns1:detail_id>
+          </ns1:detrequest>
+        </ns1:parameters>
+      </ns1:detailrequest>
+    </ns1:RispRequest>
+  </soap:Body>
+</soap:Envelope>

@@ -1,0 +1,25 @@
+id|desc|extra info|html form name|table column|table|risp xml start|field for risp|risp xml end|field validation|group validation|group validation fields|lookup list|action if valid|error Message|concatenate fields|concat delimeter|overwrite if filled|upper case|variable order|xml order
+1|Nominal Ref|none|frmNSNominalRef|P_NOMINAL_REF|NOMINAL_SEARCH|none|none|none|none|ONE OF|1,2,3|none|BLANK ALL|none|none|none|Y|Y|1|none
+2|PNC Id|(eg. 1999/1234A)|frmNSPncId|P_PNC|NOMINAL_SEARCH|<risp:pncid>|2|</risp:pncid>|none|ONE OF|1,2,3|none|BLANK ALL|none|none|none|Y|Y|2|06
+3|CRO|none|frmNSCRO|P_CRO|NOMINAL_SEARCH|<risp:cro>|3|</risp:cro>|none|ONE OF|1,2,3|none|BLANK ALL|none|none|none|Y|Y|15|04
+4|Surname/Maiden Name|none|frmNSSurname1Sm|P_SURNAME_1|none|<risp:surname>|4|</risp:surname>|NO WILDCARD|none|none|none|none|none|none|none|Y|Y|3|01
+5| |none|frmNSSurname2Sm|P_SURNAME_2|none|none|none|none|NO WILDCARD|none|none|none|none|none|none|none|Y|Y|4|none
+6|Forename/Nick name|none|frmNSForename1Sm|P_FORENAME_1|none|<risp:forenames>|6,7|</risp:forenames>|none|none|none|none|none|none|none|none|Y|Y|5|02
+7| |none|frmNSForename2Sm|P_FORENAME_2|none|none|none|none|none|none|none|none|none|none|none|none|Y|Y|6|none
+8|Surname/Maiden Name|none|frmNSSurname1Wd|P_SURNAME_1|none|<risp:surname>|8|</risp:surname>|NO WILDCARD|none|none|none|none|none|none|none|N|Y|3|01
+9| |none|frmNSSurname2Wd|P_SURNAME_2|none|none|none|none|none|none|none|none|none|none|none|none|N|Y|4|none
+10|Forename/Nick name|none|frmNSForename1Wd|P_FORENAME_1|none|<risp:forenames>|10,11|</risp:forenames>|none|none|none|none|none|none|none|none|N|Y|5|02
+11| |none|frmNSForename2Wd|P_FORENAME_2|none|none|none|none|none|none|none|none|none|none|none|none|N|Y|6|none
+12|Date Of Birth|none|frmNSDOB|P_DOB|none|<risp:dob>|12|</risp:dob>|DATE|none|none|none|none|none|21,22,23|/|Y|N|12|03
+13|Exact DOB Match?|none|frmNSExactDOB|P_EXACT|none|none|none|none|none|none|none|none|none|none|none|none|Y|N|18|none
+14|Sex|none|frmNSSex|P_SEX|none|<risp:gender>|14|</risp:gender>|none|none|none|none|none|none|none|none|Y|Y|10|05
+15|Age Range|none|frmNSAgeFrom|P_AGE_1|none|<risp:agefrom>|15|</risp:agefrom>|NUMBER|none|none|none|none|Age from must be a number|none|none|Y|N|13|08
+16| |none|frmNSAgeTo|P_AGE_2|none|<risp:ageto>|16|</risp:ageto>|NUMBER|LESS THAN|13|none|none|Age to must be a number|none|none|Y|N|14|09
+17|Place Of Birth|none|frmNSPOB|P_POB|none|<risp:place_of_birth>|17|</risp:place_of_birth>|none|none|none|none|none|none|none|none|Y|Y|16|10
+18|Postal Town|none|frmNSTown|P_TOWN|none|<risp:postal_town>|18|</risp:postal_town>|none|none|none|none|none|none|none|none|Y|Y|17|11
+19|Maiden Name|none|frmNSMaidenName|P_MAIDEN|none|<risp:maiden_name>|19|</risp:maiden_name>|none|none|none|none|none|none|none|none|Y|Y|7|07
+20|Nick name|none|frmNSNickname|P_FAMILIAR|none|none|none|none|none|none|none|none|none|none|none|none|Y|Y|8|none
+21|Dob Day|none|frmNSDobDay|P_DOB_PART|none|none|none|none|none|none|none|none|none|none|none|none|Y|N|11|none
+22|Dob Mon|none|frmNSDobMon|none|none|none|none|none|none|none|none|none|none|none|none|none|Y|N|none|none
+23|Dob Year|none|frmNSDobYear|none|none|none|none|none|none|none|none|none|none|none|none|none|Y|N|none|none
+24|Fuzzy Flag|none|frmChkFuzzy|P_FUZZY|none|<risp:fuzzy_name>|24|</risp:fuzzy_name>|none|none|none|none|none|none|none|none|Y|N|9|12
