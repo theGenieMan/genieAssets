@@ -130,6 +130,36 @@
      
     </cffunction>           
 
+    <cffunction name="updateError" access="remote" returntype="string" output="false" hint="updates a genie error returns error ref">
+        <cfargument name="errorData" required="true" type="struct" hint="error data structure">
+		
+		<cfset var returnVar=true>
+		<cfset var qUpdate="">
+		
+		<cfquery name="qUpdate" datasource="#variables.warehouseDSN#">
+			UPDATE browser_owner.GENIE_ERRORS
+			SET    PROBLEM_TYPE=<cfqueryparam value="#errorData.problemType#" cfsqltype="cf_sql_varchar" />,
+			       RESOLUTION_TEXT=<cfqueryparam value="#errorData.problemNotes#" cfsqltype="cf_sql_clob" />,
+				   RESOLVED=<cfqueryparam value="#errorData.resolved#" cfsqltype="cf_sql_varchar" />,
+				   <cfif errorData.RESOLVED IS "Y">
+				   STATUS=<cfqueryparam value="RESOLVED" cfsqltype="cf_sql_varchar" />,
+				   <cfelse>
+				   STATUS=<cfqueryparam value="OUTSTANDING" cfsqltype="cf_sql_varchar" />,	   
+				   </cfif>	   
+				   RESOLVED_BY=<cfqueryparam value="#errorData.resolvedByUID#" cfsqltype="cf_sql_varchar" />,
+				   RESOLVED_BY_NAME=<cfqueryparam value="#errorData.resolvedByName#" cfsqltype="cf_sql_varchar" />
+				   <cfif Len(errorData.dateResolved) GT 0>
+				   	   <cfif LSIsDate(errorData.dateResolved)>
+					   ,RESOLUTION_DATE=<cfqueryparam value="#CreateODBCDate(LSParseDateTime(errorData.dateResolved))#" cfsqltype="cf_sql_timestamp">
+					   </cfif>
+				   </cfif>
+			WHERE  ERROR_URN=<cfqueryparam value="#errorData.errorUrn#" cfsqltype="cf_sql_varchar" />
+		</cfquery>
+		
+		<cfreturn returnVar>
+		
+	</cffunction>
+
 	<cffunction name="getErrorList" access="remote" returntype="xml" output="false" hint="gets an xml list of genie errors">
   	  <cfargument name="errorUrn" type="string" required="true" hint="urn of the error">
 	  <cfargument name="errorYear" type="string" required="true" hint="error year">	    	  	  
@@ -234,5 +264,93 @@
         <cfreturn bugUrn>
      
     </cffunction>      
+
+	<cffunction name="getBugList" access="remote" returntype="xml" output="false" hint="gets an xml list of genie bugss">
+  	  <cfargument name="bugUrn" type="string" required="true" hint="urn of the bug">
+	  <cfargument name="bugYear" type="string" required="true" hint="bug year">	    	  	  
+	  <cfargument name="dateFrom" type="string" required="true" hint="bug from date dd/mm/yyyy">
+	  <cfargument name="dateTo" type="string" required="true" hint="bug to date dd/mm/yyyy">
+	  <cfargument name="bugBy" type="string" required="true" hint="person who generated the bug">
+	  <cfargument name="status" type="string" required="true" hint="bug status">
+    
+      <cfset var returnXml='<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><BugResults xger.s="http://tempuri.org/"><resultCount>%resultCount%</resultCount><Bugs>%bugList%</Bugs></BugResults></soap:Body></soap:Envelope>'>
+	  <cfset var bugXml="<Bug><bugUrn>%bugUrn%</bugUrn><bugBy><![CDATA[%bugBy%]]></bugBy><bugDate>%bugDate%</bugDate><bugDetails><![CDATA[%bugDetails%]]></bugDetails><bugStatus>%bugStatus%</bugStatus></Bug>">
+	  <cfset var qBugList = "">
+	  <cfset var bugXmlResults="">
+	  <cfset var thisBug="">	  	    
+    
+      <cfquery name="qBugList" datasource="#variables.warehouseDSN#" result="eSql">
+		SELECT br.*
+		FROM   browser_owner.BUG_REPORTS br
+		WHERE  (1=1)
+		<cfif Len(status) GT 0>
+		AND    br.STATUS=<cfqueryparam value="#status#" cfsqltype="cf_sql_varchar" />
+		</cfif>
+		<cfif Len(bugYear) GT 0>
+		AND    TO_CHAR(br.BUG_DATE,'YYYY')=<cfqueryparam value="#bugYear#" cfsqltype="cf_sql_varchar" />
+		</cfif>		
+		<cfif Len(bugUrn) GT 0>
+		AND br.BUG_URN=<cfqueryparam value="#bugUrn#" cfsqltype="cf_sql_varchar" />
+		</cfif>
+		<cfif Len(bugBy) GT 0>
+		AND br.BUG_BY=<cfqueryparam value="#bugBy#" cfsqltype="cf_sql_varchar" />
+		</cfif>
+		<cfif Len(dateFrom) GT 0 AND Len(dateTo) IS 0>
+		AND TRUNC(BUG_DATE)=TO_DATE('#dateFrom#','DD/MM/YYYY')	
+		</cfif>
+		<cfif Len(dateFrom) GT 0 AND Len(dateTo) GT 0>
+		AND BUG_DATE BETWEEN TO_DATE('#dateFrom# 00:00:00','DD/MM/YYYY HH24:MI:SS')
+		                     AND TO_DATE('#dateTo# 23:59:59','DD/MM/YYYY HH24:MI:SS')	
+		</cfif>		
+		ORDER BY br.BUG_DATE DESC
+	  </cfquery>
+	  	  
+	    <cfloop query="qBugList">		  		  	
+			<cfset thisBug=duplicate(bugXml)>
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugUrn%',BUG_URN)>
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugBy%',BUG_BY_NAME)>				
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugDate%',DateFormat(BUG_DATE,"DD/MM/YYYY")&" "&TimeFormat(BUG_DATE,"HH:mm:ss"))>				
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugDetails%','Screen:<b>'&SCREEN&"</b><br>Type:<b>"&BUG_TYPE&"</b><Br>Short Text:<b>"&Left(BUG_DESCRIPTION,120)&"</b>")>
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugStatus%',STATUS)>
+			<cfset bugXmlResults &= thisBug>				  
+		</cfloop>
+	    
+	    <cfset returnXml=Replace(returnXml,'%resultCount%',qBugList.recordCount)>
+		<cfset returnXml=Replace(returnXml,'%bugList%',bugXmlResults)>				
+    
+     <cfreturn returnXml>
+    
+	</cffunction>
+
+    <cffunction name="updateBug" access="remote" returntype="string" output="false" hint="updates a genie error returns error ref">
+        <cfargument name="bugData" required="true" type="struct" hint="bug data structure">
+		
+		<cfset var returnVar=true>
+		<cfset var qUpdate="">
+		
+		<cfquery name="qUpdate" datasource="#variables.warehouseDSN#">
+			UPDATE browser_owner.BUG_REPORTS
+			SET    REPLICATED=<cfqueryparam value="#bugData.replicated#" cfsqltype="cf_sql_varchar" />,
+			       FIXED=<cfqueryparam value="#bugData.fixed#" cfsqltype="cf_sql_varchar" />,
+				   FIXED_VERSION=<cfqueryparam value="#bugData.fixedVersion#" cfsqltype="cf_sql_varchar" />,
+				   FIXED_DETAILS=<cfqueryparam value="#bugData.fixedNotes#" cfsqltype="cf_sql_clob" />,				  				   
+				   <cfif bugData.FIXED IS "Y">
+				   STATUS=<cfqueryparam value="FIXED" cfsqltype="cf_sql_varchar" />,
+				   <cfelse>
+				   STATUS=<cfqueryparam value="OUTSTANDING" cfsqltype="cf_sql_varchar" />,	   
+				   </cfif>	   
+				   FIXED_BY=<cfqueryparam value="#bugData.fixedByUID#" cfsqltype="cf_sql_varchar" />,
+				   FIXED_BY_NAME=<cfqueryparam value="#bugData.fixedByName#" cfsqltype="cf_sql_varchar" />
+				   <cfif Len(bugData.dateFixed) GT 0>
+				   	   <cfif LSIsDate(bugData.dateFixed)>
+					   ,FIXED_DATE=<cfqueryparam value="#CreateODBCDate(LSParseDateTime(bugData.dateFixed))#" cfsqltype="cf_sql_timestamp">
+					   </cfif>
+				   </cfif>
+			WHERE  BUG_URN=<cfqueryparam value="#bugData.bugUrn#" cfsqltype="cf_sql_varchar" />
+		</cfquery>
+		
+		<cfreturn returnVar>
+		
+	</cffunction>
        
 </cfcomponent>
