@@ -133,4 +133,160 @@
 		
 	</cffunction> 
 
+	<cffunction name="doCustodyWhiteboard" output="false" access="public" returntype="array">
+		<cfargument name="custodySuite" required="true">
+		<cfset var qCusts="">
+        <cfset var custs=ArrayNew(1)>
+        <cfset var cust="">
+		
+		<cfset custodySuite=Trim(ReplaceList(custodySuite,'ALLWP,ALLWMP,ALLCUST','23,22, '))>
+
+		<cfquery name="qCusts" datasource="#variables.warehouseDSN#">
+		SELECT cs.CUSTODY_REF
+		FROM   browser_owner.CUSTODY_SEARCH cs, browser_owner.CUSTODY_DETAIL cd
+		WHERE  cd.custody_ref=cs.custody_ref
+		AND    cs.sensetive = 'N'
+		<cfif Len(custodySuite) GT 0>		
+			 <cfif Len(custodySuite) IS 2>
+			  	  AND   SUBSTR(STATION,0,2) = <cfqueryparam value="#custodySuite#" cfsqltype="cf_sql_varchar" />	 
+			 <cfelse> 
+				  AND   STATION	 
+				  <cfif Find("%",custodySuite) OR Find("_",custodySuite)>
+		    	    LIKE 
+				  <cfelse>
+				    = 
+				  </cfif>
+			      <cfqueryparam value="#custodySuite#" cfsqltype="cf_sql_varchar">
+			 </cfif> 
+	    </cfif> 
+		AND    status IN ('C','I')
+		AND    departure_time is null
+		order by next_review_date 
+		</cfquery>
+        
+        <cfif qCusts.RecordCount GT 0>
+         <cfloop query="qCusts">
+          <cfset cust=CreateObject("component","genieObj.custody.custody")>
+          <cfset cust.setCUSTODY_REF(CUSTODY_REF)>
+          <cfset cust=read(cust)>
+          <cfset ArrayAppend(custs,cust)>
+         </cfloop>
+        </cfif>
+
+        <cfreturn custs>
+		
+	</cffunction> 
+
+	<cffunction name="doCustodyEnquiry" output="false" access="public" returntype="array">
+      <cfargument name="searchTerms" type="struct" required="true" hint="structure of search terms for custody enquiry">
+      
+      <cfset var qSearchResults="">
+      <cfset var searchItem="">
+      <cfset var searchKey="">
+	  <cfset var custs=ArrayNew(1)>
+      <cfset var cust="">
+    
+      <cftry>
+      
+      <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#" RESULT="theSql">
+			SELECT * FROM
+			(
+				SELECT DISTINCT CS.CUSTODY_REF,STATION,cs.NOMINAL_REF,NAME,TO_CHAR(ARREST_TIME,'DD/MM/YY HH24:MI') AS ARR_DATE,
+				       			AO_NAME, AO_BADGE, ARREST_TIME, TO_CHAR(CREATION_DATE,'DD') AS REC_DAY, TO_CHAR(CREATION_DATE,'MM') AS REC_MON,
+				       			TO_CHAR(CREATION_DATE,'YYYY') AS REC_YEAR, CUSTODY_TYPE, DOB, PLACE_OF_ARREST
+				FROM   BROWSER_OWNER.CUSTODY_SEARCH CS, browser_owner.CUSTODY_DETAIL CD
+		       <cfif Len(structFind(searchTerms,'reason_for_departure')) GT 0>, browser_owner.CUSTODY_DEPARTURES CDE</cfif>
+		       <cfif Len(structFind(searchTerms,'arrest_reason_text')) GT 0>, browser_owner.CUSTODY_REASONS CR</cfif>
+           	   <cfif Len(structFind(searchTerms,'warning_marker')) GT 0>, browser_owner.GE_WARNINGS WR</cfif>
+				WHERE  CS.CUSTODY_REF=CD.CUSTODY_REF
+				AND    CS.SENSETIVE = 'N'
+	    	   <cfif Len(structFind(searchTerms,'reason_for_departure')) GT 0>AND CS.CUSTODY_REF=CDE.CUSTODY_REF</cfif>
+			   <cfif Len(structFind(searchTerms,'arrest_reason_text')) GT 0>AND CS.CUSTODY_REF=CR.CUSTODY_REF</cfif>
+			   <cfloop collection="#arguments.searchTerms#" item="searchKey">
+                 <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
+				 <!--- ignore dates and warning marker --->
+				 <cflog file="custEnq" type="information" text="list find x#searchItem#x #ListFindNoCase('dob_1,dob_2,arrest_date_1,arrest_time_1,arrest_date_2,arrest_time_2,dep_date_1,dep_time_1,dep_date_2,dep_time_2,warning_marker',searchKey)#">	
+				 <cfif ListFindNoCase('dob_1,dob_2,arrest_date_1,arrest_time_1,arrest_date_2,arrest_time_2,dep_date_1,dep_time_1,dep_date_2,dep_time_2,warning_marker',searchKey) IS 0>
+				    <cfif Len(searchItem) GT 0>	 
+				      AND UPPER(#iif(searchKey IS "custody_ref",de('cs.'),de(''))##PreserveSingleQuotes(searchKey)#)
+	                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
+	                  LIKE
+	                 <cfelse>
+	                  =
+	                 </cfif>
+	                 <cfqueryparam value="#UCase(searchItem)#" cfsqltype="cf_sql_varchar">
+	                </cfif>			 
+				 </cfif>
+			   </cfloop>
+			   <cfif Len(structFind(searchTerms,'dob_1')) GT 0 AND Len(structFind(searchTerms,'dob_2')) IS 0>
+			   	AND DOB=TO_DATE('#structFind(searchTerms,'dob_1')#','DD/MM/YYYY')
+			   </cfif>
+			   <cfif Len(structFind(searchTerms,'dob_1')) GT 0 AND Len(structFind(searchTerms,'dob_2')) GT 0>
+			   	AND DOB BETWEEN TO_DATE('#structFind(searchTerms,'dob_1')#','DD/MM/YYYY') AND TO_DATE('#structFind(searchTerms,'dob_2')#','DD/MM/YYYY')
+			   </cfif>
+			   <cfif Len(structFind(searchTerms,'arrest_date_1')) GT 0 AND Len(structFind(searchTerms,'arrest_date_2')) IS 0>
+			   	 <cfif Len(structFind(searchTerms,'arrest_time_1')) IS 0>  
+			   	   AND TRUNC(ARREST_TIME)=TRUNC(TO_DATE('#structFind(searchTerms,'arrest_date_1')#','DD/MM/YYYY'))
+				 <cfelse>
+				   AND ARREST_TIME=TO_DATE('#structFind(searchTerms,'arrest_date_1')# #structFind(searchTerms,'arrest_time_1')#:00','DD/MM/YYYY HH24:MI:SS')	 
+				 </cfif>
+			   </cfif>
+			   <cfif Len(structFind(searchTerms,'arrest_date_1')) GT 0 AND Len(structFind(searchTerms,'arrest_date_2')) GT 0>
+			   	   <cfif Len(structFind(searchTerms,'arrest_time_1')) GT 0 AND Len(structFind(searchTerms,'arrest_time_2')) GT 0>
+			   			AND ARREST_TIME BETWEEN TO_DATE('#structFind(searchTerms,'arrest_date_1')# #structFind(searchTerms,'arrest_time_1')#:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#structFind(searchTerms,'arrest_date_2')# #structFind(searchTerms,'arrest_time_2')#:59','DD/MM/YYYY HH24:MI:SS')
+			   	   <cfelse>	
+			   			AND TRUNC(ARREST_TIME) BETWEEN TRUNC(TO_DATE('#structFind(searchTerms,'arrest_date_1')#','DD/MM/YYYY')) AND TRUNC(TO_DATE('#structFind(searchTerms,'arrest_date_2')#','DD/MM/YYYY'))
+				   </cfif>
+			   </cfif>		
+			   
+			   	<cfif Len(structFind(searchTerms,'dep_date_1')) GT 0 AND Len(structFind(searchTerms,'dep_date_2')) IS 0>
+			   	 <cfif Len(structFind(searchTerms,'dep_time_1')) IS 0>  
+			   	   AND TRUNC(DEPARTURE_TIME)=TRUNC(TO_DATE('#structFind(searchTerms,'dep_date_1')#','DD/MM/YYYY'))
+				 <cfelse>
+				   AND DEPARTURE_TIME BETWEEN TO_DATE('#structFind(searchTerms,'dep_date_1')# #structFind(searchTerms,'dep_time_1')#:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#structFind(searchTerms,'dep_date_1')# #structFind(searchTerms,'dep_time_1')#:59','DD/MM/YYYY HH24:MI:SS') 	 
+				 </cfif>
+			   </cfif>
+			   
+				<cfif Len(structFind(searchTerms,'dep_date_1')) GT 0 AND Len(structFind(searchTerms,'dep_date_2')) GT 0>
+			   	   <cfif Len(structFind(searchTerms,'dep_time_1')) GT 0 AND Len(structFind(searchTerms,'dep_time_2')) GT 0>
+			   			AND DEPARTURE_TIME BETWEEN TO_DATE('#structFind(searchTerms,'dep_date_1')# #structFind(searchTerms,'dep_time_1')#:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#structFind(searchTerms,'dep_date_2')# #structFind(searchTerms,'dep_time_2')#:59','DD/MM/YYYY HH24:MI:SS')
+			   	   <cfelse>	
+			   			AND TRUNC(DEPARTURE_TIME) BETWEEN TRUNC(TO_DATE('#structFind(searchTerms,'dep_date_1')#','DD/MM/YYYY')) AND TRUNC(TO_DATE('#structFind(searchTerms,'dep_date_2')#','DD/MM/YYYY'))
+				   </cfif>
+			   </cfif>	
+			   
+			   <cfif Len(structFind(searchTerms,'warning_marker')) GT 0>
+		           AND cs.NOMINAL_REF=wr.NOMINAL_REF
+		           AND wr.WSC_CODE = <cfqueryparam value="#structFind(searchTerms,'warning_marker')#" cfsqltype="cf_sql_varchar">
+		            <cfif structFind(searchTerms,'warning_marker') IS "PY">
+		              AND cs.NOMINAL_REF NOT IN (SELECT ge1.NOMINAL_REF FROM browser_owner.GE_WARNINGS ge1
+		                                         WHERE ge1.WSC_CODE='XY'
+		                                         AND ge1.NOMINAL_REF=cs.NOMINAL_REF)
+		            </cfif>         
+		           AND wr.DATE_MARKED <= cs.ARREST_TIME
+		       </cfif> 
+			   			   	   
+			   ORDER BY ARREST_TIME DESC
+			)
+			WHERE ROWNUM < 202
+	  </cfquery>
+	  
+		  <cfcatch type="database"> 
+		     <cflog file="custEnq" type="information" text="#cfcatch.SQL#">
+		  </cfcatch>
+	  </cftry>
+	  
+	  <cfif qSearchResults.RecordCount GT 0>
+         <cfloop query="qSearchResults">
+          <cfset cust=CreateObject("component","genieObj.custody.custody")>
+          <cfset cust.setCUSTODY_REF(CUSTODY_REF)>
+          <cfset cust=read(cust)>
+          <cfset ArrayAppend(custs,cust)>
+         </cfloop>
+      </cfif>
+	  <cflog file="custEnq" type="information" text="#theSql.SQL#">
+	  <cfreturn custs>
+    
+	</cffunction>
+
 </cfcomponent>

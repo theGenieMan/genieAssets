@@ -96,36 +96,52 @@
         
 	</cffunction>    
     
-    <cffunction name="doWestMerciaProcessDecisionSearch" output="false" access="public" returntype="query">
+    <cffunction name="doPDEnquiry" output="false" access="public" returntype="array">
       <cfargument name="searchTerms" type="struct" required="true" hint="structure of search terms for address query">
       
       <cfset var qSearchResults="">
       <cfset var searchItem="">
       <cfset var searchKey="">
-      
+      <cfset var pdArray=arrayNew(1)>
+	  <cfset var thisPd="">
+	    
 		  <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#">
-		    select PD.VRM, pd.OFF_ORG_CODE||'/'||pd.OFF_SERIAL_NO||'/'||DECODE(LENGTH(pd.OFF_YEAR),1, '0' || pd.OFF_YEAR, pd.OFF_YEAR) AS CRIME_NO,
-		           pd.CRIME_REF, TO_CHAR(pd.OFF_CREATED_DATE,'YYYY') AS REC_YEAR,
-		 		   TO_CHAR(pd.OFF_CREATED_DATE,'MM') AS REC_MON, TO_CHAR(pd.OFF_CREATED_DATE,'DD') AS REC_DAY,
-			       USAGE AS VEH_USAGE, TO_CHAR(DATE_USED,'DD/MM/YYYY') AS DATE_USED, MANUFACTURER, MODEL,
-			       CRIME_FIRST_DATE,CRIME_LAST_DATE
-			from   browser_owner.ge_property pd, browser_owner.ge_property_usage pu
-			where pd.property_ref=pu.property_Ref(+)
+		    SELECT * FROM
+			 (
+			  SELECT pd.PD_REF
+				FROM   browser_owner.PD_SEARCH pd
+				WHERE  (1=1)
+				<cfif Len(searchTerms.DATE_FORM1) GT 0 and Len(searchTerms.DATE_FORM2) IS 0>
+                 AND TRUNC(DATE_FORMALISED)=TRUNC(TO_DATE('#searchTerms.DATE_FORM1#','DD/MM/YYYY'))
+                <cfelseif  Len(searchTerms.DATE_FORM1) GT 0 and Len(searchTerms.DATE_FORM2) GT 0>
+                 AND DATE_FORMALISED BETWEEN TO_DATE('#searchTerms.DATE_FORM1# 00:00:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#searchTerms.DATE_FORM2# 23:59:59','DD/MM/YYYY HH24:MI:SS')
+                </cfif>
 	             <cfloop collection="#arguments.searchTerms#" item="searchKey">
 	                <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
-	                <cfif Len(searchItem) GT 0>
-	                AND #PreserveSingleQuotes(searchKey)#
-	                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
-	                  LIKE
-	                 <cfelse>
-	                  =
-	                 </cfif>
-	                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
-	                </cfif>
+					<cfif Left(PreserveSingleQuotes(searchKey),4) IS NOT "DATE">
+		                <cfif Len(searchItem) GT 0>
+		                AND #PreserveSingleQuotes(searchKey)#
+		                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
+		                  LIKE
+		                 <cfelse>
+		                  =
+		                 </cfif>
+		                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
+		                </cfif>
+					</cfif>
 	             </cfloop> 
+	           ORDER BY NVL(DATE_FORMALISED,'01-Jan-1900') DESC
+			  )
+			 WHERE ROWNUM < 202
 		  </cfquery> 
+		  
+		  <cfloop query="qSearchResults">
+		  	  <cfset thisPd=createObject('component','genieObj.processDecisions.processDecision')>
+			  <cfset thisPd.setPD_REF(PD_REF)>
+		  	  <cfset arrayAppend(pdArray,read(thisPd))>
+		  </cfloop>
                 
-       <cfreturn qSearchResults>      
+       <cfreturn pdArray>      
      
     </cffunction>  
     

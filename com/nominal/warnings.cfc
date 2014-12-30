@@ -58,6 +58,10 @@
 		<cfreturn variables.DATE_MARKED>
 	</cffunction>
 
+	<cffunction name="getDATE_MARKED_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.DATE_MARKED,"DD/MM/YYYY")>
+	</cffunction>
+
 	<cffunction name="setDATE_MARKED" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
 		<cfif (IsDate(arguments.val)) OR (arguments.val EQ "")>
@@ -70,6 +74,10 @@
 	<cffunction name="getEND_DATE" output="false" access="public" returntype="any">
 		<cfreturn variables.END_DATE>
 	</cffunction>
+	
+	<cffunction name="getEND_DATE_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.END_DATE,"DD/MM/YYYY")>
+	</cffunction>	
 
 	<cffunction name="setEND_DATE" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">

@@ -316,4 +316,40 @@
     
     </cffunction>
 
+    <cffunction name="doSerialCertifSearch" output="false" access="public" returntype="query">
+      <cfargument name="serialNo" required="true" type="string" hint="serial no to search on">
+	  <cfargument name="certifNo" required="true" type="string" hint="certif no to search on">
+      
+      <cfset var qSearch="">
+      
+      <cfquery name="qSearch" datasource="#variables.warehouseDSN#">
+		 SELECT p.*, w.*, c.*
+		 FROM   browser_owner.NFLMS_PERSON p, browser_owner.NFLMS_CERTIFICATE c, browser_owner.NFLMS_WEAPON w
+		 WHERE p.PERSON_URN=c.PERSON_URN
+		 AND     c.CERT_NO=w.CERT_NO
+	  	  <cfif Len(serialNo) GT 0>
+		   AND  w.SERIAL_NO
+		  <cfif Find("%",serialNo) OR Find("_",serialNo)>
+		    LIKE 
+			 <cfelse>
+			 = 
+			 </cfif>
+		  '#serialNo#' 
+		  </cfif> 	 
+	  	  <cfif Len(certifNo) GT 0>
+		   AND  c.CERT_NO
+		  <cfif Find("%",certifNo) OR Find("_",certifNo)>
+		    LIKE 
+			 <cfelse>
+			 = 
+			 </cfif>
+		  '#certifNo#' 
+		  </cfif> 	 	
+		  ORDER BY SURNAME, FORENAMES, DOB
+      </cfquery>
+      
+      <cfreturn qSearch>
+    
+    </cffunction>
+
 </cfcomponent>

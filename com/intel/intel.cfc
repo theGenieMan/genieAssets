@@ -23,7 +23,8 @@
 	<cfproperty name="HAND_CODE" type="string" default="">
 	<cfproperty name="ORG_CODE_FORCE" type="string" default="">
 	<cfproperty name="HAND5_OPT" type="string" default="">
-	<cfproperty name="HAND_GUIDANCE" type="string" default="">     
+	<cfproperty name="HAND_GUIDANCE" type="string" default="">
+	<cfproperty name="INDEXED_NOMINALS" type="array" default="">     
 
 	<cfscript>
 		//Initialize the CFC with the default properties values.
@@ -44,7 +45,8 @@
 		variables.HAND_CODE = "";
 		variables.ORG_CODE_FORCE = "";
 		variables.HAND5_OPT = "";
-		variables.HAND_GUIDANCE = "";				
+		variables.HAND_GUIDANCE = "";
+		variables.INDEXED_NOMINALS = "";				
 	</cfscript>
 
 	<cffunction name="init" output="false" returntype="intel">
@@ -235,4 +237,14 @@
 		<cfargument name="val" required="true">
 		<cfset variables.HAND_GUIDANCE = arguments.val>
 	</cffunction> 
+	
+	<cffunction name="getINDEXED_NOMINALS" output="false" access="public" returntype="any">
+		<cfreturn variables.INDEXED_NOMINALS>
+	</cffunction>
+
+	<cffunction name="setINDEXED_NOMINALS" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.INDEXED_NOMINALS = arguments.val>
+	</cffunction> 	
+	
 </cfcomponent>

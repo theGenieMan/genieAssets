@@ -33,6 +33,7 @@
 	<cfproperty name="REPORT_METHOD" type="string" default="">
 	<cfproperty name="REPORT_DATE" type="date" default="">
 	<cfproperty name="DETECTED_FLAG" type="numeric" default="0">
+	<cfproperty name="DETECTED_DESC" type="string" default="0">
 	<cfproperty name="CUC_CODE" type="numeric" default="0">
 	<cfproperty name="CREATED_DATE" type="date" default="">
 	<cfproperty name="VALIDATION_STATUS" type="string" default="">
@@ -42,6 +43,7 @@
 	<cfproperty name="LPA" type="string" default="">
 	<cfproperty name="GRID_REF" type="string" default="">
 	<cfproperty name="STATUS" type="string" default="">
+	<cfproperty name="COMMITTED" type="string" default="">
 
 	<cfscript>
 		//Initialize the CFC with the default properties values.
@@ -72,6 +74,7 @@
 		variables.REPORT_METHOD = "";
 		variables.REPORT_DATE = "";
 		variables.DETECTED_FLAG = 0;
+		variables.DETECTED_DESC = "";
 		variables.CUC_CODE = 0;
 		variables.CREATED_DATE = "";
 		variables.VALIDATION_STATUS = "";
@@ -81,6 +84,7 @@
 		variables.LPA = "";
 		variables.GRID_REF = "";
 		variables.STATUS = "";
+		variables.COMMITTED = "";
 	</cfscript>
 
 	<cffunction name="init" output="false" returntype="genieObj.offences.offence">
@@ -119,6 +123,10 @@
 
 	<cffunction name="getYEAR" output="false" access="public" returntype="any">
 		<cfreturn variables.YEAR>
+	</cffunction>
+	
+	<cffunction name="getCRIME_NO" output="false" access="public" returntype="any">
+		<cfreturn variables.ORG_CODE&"/"&variables.SERIAL_NO&"/"&iif(Len(variables.YEAR) IS 1,DE('0'&variables.YEAR),de(variables.YEAR))>
 	</cffunction>
 
 	<cffunction name="setYEAR" output="false" access="public" returntype="void">
@@ -352,6 +360,15 @@
 			<cfthrow message="'#arguments.val#' is not a valid numeric"/>
 		</cfif>
 	</cffunction>
+	
+	<cffunction name="getDETECTED_DESC" output="false" access="public" returntype="any">
+		<cfreturn variables.DETECTED_DESC>
+	</cffunction>
+
+	<cffunction name="setDETECTED_DESC" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">	
+		<cfset variables.DETECTED_DESC = arguments.val>		
+	</cffunction>	
 
 	<cffunction name="getCUC_CODE" output="false" access="public" returntype="any">
 		<cfreturn variables.CUC_CODE>
@@ -447,7 +464,16 @@
 	</cffunction>
 
 	<cffunction name="getCRIMENO" output="false" access="public" returntype="any">
-		<cfreturn variables.ORG_CODE&"/"&variables.SERIAL_NO&"/"&variables.YEAR>
+		<cfreturn variables.ORG_CODE&"/"&variables.SERIAL_NO&"/"&iif(Len(variables.YEAR) IS 1,de('0'),de(''))&variables.YEAR>
+	</cffunction>
+
+	<cffunction name="setCOMMITTED" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.COMMITTED = arguments.val>
+	</cffunction>
+
+	<cffunction name="getCOMMITTED" output="false" access="public" returntype="any">
+		<cfreturn variables.COMMITTED>
 	</cffunction>
 
 </cfcomponent>

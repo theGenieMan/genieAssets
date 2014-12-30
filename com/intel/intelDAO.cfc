@@ -122,6 +122,9 @@
             <cfif sort is "date">
             Order By date_start desc
             </cfif>
+            <cfif sort is "sal">
+            Order By security_access_level, date_start desc
+            </cfif>
 			</cfquery>
 	        
 	        <cfreturn qRead>
@@ -320,6 +323,82 @@
 	        
 	        <cfreturn qIntel>
 	 </cffunction> 
+    
+	<cffunction name="doIntelEnquiry" output="false" access="public" returntype="array" hint="function the performs intel enquiry search">
+      <cfargument name="searchTerms" type="struct" required="true" hint="structure of search terms for address query">
+      
+      <cfset var qSearchResults="">
+      <cfset var searchItem="">
+      <cfset var searchKey="">
+      <cfset var intelArray=arrayNew(1)>
+	  <cfset var thisIntel="">
+	    
+		  <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#">		  	  
+		  	 SELECT * FROM (
+			  SELECT int.*
+				FROM   browser_owner.INTELL_SEARCH int
+				       <cfif ListLen(searchTerms.CATEGORY,",") GT 0>
+					   , browser_owner.INTELL_INDEXES idx	   
+					   </cfif>
+				WHERE  (1=1)
+				<cfif ListLen(searchTerms.CATEGORY,",") GT 0>
+					AND 
+					 (
+					        idx.LOG_REF=int.LOG_REF
+					   AND  idx.INDEX_TYPE=<cfqueryparam value="CAT" cfsqltype="cf_sql_varchar">
+					   AND  idx.INDEX_CODE IN (<cfqueryparam value="#searchTerms.CATEGORY#" cfsqltype="cf_sql_varchar" list="true" >)   
+					 )
+				</cfif>
+				<cfif Len(searchTerms.DIVISION) GT 0>
+				 AND int.DIVISION IN (<cfqueryparam value="#searchTerms.DIVISION#" cfsqltype="cf_sql_varchar" list="true">)
+				</cfif>
+				<cfif Len(searchTerms.DATE_CREATED1) GT 0 and Len(searchTerms.DATE_CREATED2) IS 0>
+                 AND TRUNC(DATE_CREATED)=TRUNC(TO_DATE('#searchTerms.DATE_CREATED1#','DD/MM/YYYY'))
+                <cfelseif  Len(searchTerms.DATE_CREATED1) GT 0 and Len(searchTerms.DATE_CREATED2) GT 0>
+                 AND DATE_CREATED BETWEEN TO_DATE('#searchTerms.DATE_CREATED1# 00:00:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#searchTerms.DATE_CREATED2# 23:59:59','DD/MM/YYYY HH24:MI:SS')
+                </cfif>
+                <cfloop collection="#arguments.searchTerms#" item="searchKey">
+	                <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
+					<cfif ListFindNoCase('DIVISION,CATEGORY,DATE_CREATED1,DATE_CREATED2',searchKey) IS 0>
+		                <cfif Len(searchItem) GT 0>
+		                AND #PreserveSingleQuotes(searchKey)#
+		                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
+		                  LIKE
+		                 <cfelse>
+		                  =
+		                 </cfif>
+		                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
+		                </cfif>
+					</cfif>
+	             </cfloop> 
+				ORDER BY DATE_START DESC
+			)
+			WHERE ROWNUM < 202				  
+		  </cfquery> 
+		  
+		  <cfloop query="qSearchResults">
+		  	  <cfset thisIntel=createObject('component','genieObj.intel.intel')>
+			  <cfset thisIntel.setLOG_REF(LOG_REF)>
+		  	  <cfset arrayAppend(intelArray,read(thisIntel))>
+		  </cfloop>
+                
+       <cfreturn intelArray>      
+     
+    </cffunction>      
+    
+    <cffunction name="getNominalsOnLog" output="false" access="public" returntype="query">
+			<cfargument name="logRef" required="true">
+			            
+			<cfset var qRead="">
+	
+			<cfquery name="qRead" DATASOURCE="#variables.WarehouseDSN#">	
+			SELECT NOMINAL_REF
+			FROM   browser_owner.INTELL_NOMS inom
+			WHERE  inom.LOG_REF=<cfqueryparam value="#arguments.logRef#" cfsqltype="cf_sql_varchar">
+			</cfquery>
+	        
+	        <cfreturn qRead>
+	</cffunction>
     
      <cffunction name="doIntelFreeTextSearch" output="false" access="public" returntype="struct" hint="returns intel logs from free text searching">
 		 <cfargument type="string" name="searchText" required="true" hint="searchText">

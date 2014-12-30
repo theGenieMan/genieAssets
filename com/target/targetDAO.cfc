@@ -60,15 +60,41 @@
 		</cfscript>
 	</cffunction>    
 
-
-
-
-
-
-
-
-
-
-
+	<cffunction name="getNominalSearchTargets" output="false" access="public" returntype="array">
+		<cfargument name="nominalList" required="true">
+		<cfset var qRead="">
+		<cfset var arrTargets=arrayNew(1)>
+		<cfset var targFoundList="">
+		<cfset var nomRef="">
+		<cfset var iTarg=0>        
+		
+		<cfquery name="qRead" datasource="#variables.WarehouseDsn#">
+     		select t1.NOMINAL_REF,t1.REASON
+            FROM   BROWSER_OWNER.TARGET_MARKERS t1
+            WHERE  TARGET_INTEREST_TYPE <> 1                                    
+            AND    end_date >= sysdate   
+            AND    NOMINAL_REF IN (<cfqueryparam value="#nominalList#" cfsqltype="cf_sql_varchar" list="true" >)						            
+		</cfquery>
+		
+		<cfset targFoundList=ValueList(qRead.NOMINAL_REF)>
+		
+		<cfset iTarg=1>
+		<cfloop list="#nominalList#" index="nomRef" delimiters=",">
+			<cfif ListFind(targFoundList,nomRef) GT 0>
+				<cfquery name="qTarg" dbtype="query">
+					SELECT REASON
+					FROM qRead
+					WHERE NOMINAL_REF='#nomRef#'
+				</cfquery>
+				<cfset arrTargets[iTarg]=qTarg.REASON>
+			<cfelse>
+				<cfset arrTargets[iTarg]="">
+			</cfif>
+			<cfset iTarg++>
+		</cfloop>
+		
+		<cfreturn arrtargets>
+		
+	</cffunction>    
 
 </cfcomponent>

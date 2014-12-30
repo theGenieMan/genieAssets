@@ -110,7 +110,7 @@
 						</td>
 					</tr>
 					<tr>
-						<td valign="bottom" align="center"><img src="/genie/images/a4swoosh.jpg" width="1300" vspace="0"></td>
+						<td valign="bottom" align="center"><img src="/images/A4swoosh.jpg" width="1300" vspace="0"></td>
 					</tr>
 				</table>
 				

@@ -2,14 +2,18 @@
       
     <cffunction name="init" access="public" returntype="any" hint="Constructor.">  
         <cfargument name="warehouseDSN" required="false" default="wmercia_jdbc" type="String">
+		<cfargument name="warehouseDSN2" required="false" default="wmercia_odbc" type="String">
 		<cfargument name="defaultStylesheet" required="false" default="jquery-ui-1.10.4.custom.css" type="String">
 		<cfargument name="defaultFont" required="false" default="Arial" type="String">
+	    <cfargument name="defaultFontSize" required="false" default="10" type="String">
         
         <cfset variables.version="1.1.0.0">    
 		<cfset variables.dateServiceStarted=DateFormat(now(),"DDD DD-MMM-YYYY")&" "&TimeFormat(now(),"HH:mm:ss")>                                  
         
-        <cfset variables.warehousedsn=arguments.warehousedsn>    
-		<cfset variables.defaultStylesheet=arguments.defaultStylesheet>                                                                                                        
+        <cfset variables.warehousedsn=arguments.warehousedsn>  
+		<cfset variables.warehousedsn2=arguments.warehousedsn2>    
+		<cfset variables.defaultStylesheet=arguments.defaultStylesheet>    
+		<cfset variables.defaultFont=arguments.defaultFont>                                                                                                        
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
         <cfreturn this />    
     </cffunction>  
@@ -149,6 +153,7 @@
 			<cfset structUserSettings.stylesheet=variables.defaultStylesheet>
 			<cfset structUserSettings.openNewWindow='N'>
 			<cfset structUserSettings.font=variables.defaultFont>
+			<cfset structUserSettings.fontSize=variables.defaultFontSize>
 			<cfset structUserSettings.lastUpdate=now()>
 			<cfquery name='qSettings' datasource='#variables.warehouseDSN#'>
 				INSERT INTO browser_owner.USER_SETTINGS
@@ -173,6 +178,7 @@
          	<cfset structUserSettings.stylesheet=qSettings.STYLE_SHEET>
 			<cfset structUserSettings.openNewWindow=qSettings.OPEN_NEW_WINDOW>
 			<cfset structUserSettings.font=qSettings.FONT>
+			<cfset structUserSettings.fontSize=qSettings.FONT_SIZE>
 			<cfset structUserSettings.lastUpdate=qSettings.LAST_UPDATE>
 		</cfif>
 		
@@ -185,7 +191,8 @@
 		<cfargument name="userName" required="true" type="string" hint="userName to update settings for">               
 		<cfargument name="font" required="true" type="string" hint="userId to update settings for">
 		<cfargument name="stylesheet" required="true" type="string" hint="userName to update settings for">
-		<cfargument name="openNewWindow" required="true" type="string" hint="userId to update settings for">		
+		<cfargument name="openNewWindow" required="true" type="string" hint="userId to update settings for">
+		<cfargument name="fontSize" required="true" type="string" hint="font size for settings update">		
 
         <cfset var qSettings=''>
        
@@ -195,6 +202,7 @@
 				   STYLE_SHEET = <cfqueryparam value="#arguments.stylesheet#" cfsqltype="cf_sql_varchar">,
 				   OPEN_NEW_WINDOW = <cfqueryparam value="#arguments.openNewWindow#" cfsqltype="cf_sql_varchar">,
 				   FONT = <cfqueryparam value="#arguments.font#" cfsqltype="cf_sql_varchar">,
+				   FONT_SIZE = <cfqueryparam value="#arguments.fontSize#" cfsqltype="cf_sql_varchar">,
 				   LAST_UPDATE = SYSDATE
 			WHERE  USER_ID = <cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar"> 				
 		</cfquery>			
@@ -206,6 +214,88 @@
        		<cflog file="genie" type="information" text="resetSession has been called" />
        		<cfset onSessionStart()>
 			<cflog file="genie" type="information" text="resetSession ended" />
+             
+    </cffunction> 
+
+ 	<cffunction name="getUserNominals" access="remote" returntype="any" output="false" hint="gets a list of nominals for a user">
+        <cfargument name="userId" required="true" type="string" hint="userId to log in">
+		
+		<cfset var qNominals="">
+		
+		<cfquery name="qNominals" datasource="#variables.WarehouseDSN#">
+		SELECT *
+		FROM browser_owner.USER_NOMINALS
+		WHERE USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">
+		ORDER BY DATE_ADDED DESC
+		</cfquery>
+		
+		<cfreturn qNominals>
+		
+	 </cffunction>
+	 
+    <cffunction name="addUserFavourite" access="remote" returntype="string" returnFormat="plain" output="false" hint="adds a user favourite nominal">
+   	  <cfargument name="userId" type="string" required="true" hint="person to add favourite for">
+	  <cfargument name="nominalRef" type="string" required="true" hint="nominal ref to add">
+	  <cfargument name="showUpdates" type="string" required="true" hint="Y or N for updates required">
+	  <cfargument name="notes" type="string" required="true" hint="any notes to add">  	  
+	
+	  <cfset var returnData="Added">
+	  <cfset var qInsert="">
+	    
+	    <cfquery name="qInsert" datasource="#variables.WarehouseDSN2#"> 
+		  INSERT INTO browser_owner.USER_NOMINALS
+		  (
+		  USER_ID,
+		  NOMINAL_REF,
+		  DATE_ADDED,
+          SHOW_UPDATES,
+          USER_NOTES
+		  )
+		  VALUES
+		  (
+		  <cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">,
+		  <cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">,  
+		  <cfqueryparam value="#CreateODBCDateTime(now())#" cfsqltype="cf_sql_timestamp">,    
+		  <cfqueryparam value="#arguments.showUpdates#" cfsqltype="cf_sql_varchar">,
+		  <cfqueryparam value="#arguments.notes#" cfsqltype="cf_sql_varchar">                    
+		  )
+		 </cfquery>  
+	    
+	  <cfreturn returnData>  
+	    
+  </cffunction>  	 
+
+  	<cffunction name="updateFavouriteNominals" access="remote" returntype="void" output="false" hint="changes the value of the USER_NOTES field, needs nominal_ref, userId and text for notes">        
+        <cfargument name="nominalRef" required="true" type="string" hint="nominalRef to change updates value of">
+        <cfargument name="userId" required="true" type="string" hint="userId to chnage updates value for">
+		<cfargument name="showUpdates" required="true" type="string" hint="value to change SHOW_UPDATES to Y or N">
+		<cfargument name="notes" required="true" type="string" hint="value to change USER_NOTES to">        
+	
+        <cfset var qUpdate="">
+           	                    
+        <!--- do the update query --->
+        <cfquery name='qUpdate' datasource='#variables.warehouseDSN2#'>
+        UPDATE   BROWSER_OWNER.USER_NOMINALS
+        SET      USER_NOTES=<cfqueryparam value="#arguments.notes#" cfsqltype="cf_sql_varchar">,
+		         SHOW_UPDATES=<cfqueryparam value="#arguments.showUpdates#" cfsqltype="cf_sql_varchar">                 
+        WHERE    USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">
+        AND      NOMINAL_REF=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">
+        </cfquery>
+   	         
+    </cffunction> 
+
+  	<cffunction name="deleteFavouriteNominal" access="remote" returntype="void" output="false" hint="deletes a nominal_ref for a userId">        
+        <cfargument name="nominalRef" required="true" type="string" hint="nominalRef to delete">
+        <cfargument name="userId" required="true" type="string" hint="userId to delete nominal for">
+	
+        <cfset var qDelete="">
+           	                    
+        <!--- do the update query --->
+        <cfquery name='qDelete' datasource='#variables.warehouseDSN2#'>
+        DELETE   FROM  BROWSER_OWNER.USER_NOMINALS                      
+        WHERE    USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">
+        AND      NOMINAL_REF=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">
+        </cfquery>
              
     </cffunction> 
        

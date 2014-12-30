@@ -161,7 +161,7 @@
              <cfloop collection="#arguments.searchTerms#" item="searchKey">
                 <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
                 <cfif Len(searchItem) GT 0>
-				
+				<cfif ListFindNoCase('post_code,building_number,building_name,part_id,street_1,locality,town,county',searchKey) GT 0>
 				 <cfif searchKey IS "POST_CODE">
 				   AND  REPLACE(POST_CODE,' ','')
 				   
@@ -170,7 +170,7 @@
 	                 <cfelse>
 	                  =
 	                 </cfif>
-	                 <cfqueryparam value="#Replace(searchItem,' ','','ALL')#" cfsqltype="cf_sql_varchar">			   
+	                 <cfqueryparam value="#Replace(UCase(searchItem),' ','','ALL')#" cfsqltype="cf_sql_varchar">			   
 				   
 				 <cfelse>
 	                AND #PreserveSingleQuotes(searchKey)#
@@ -179,10 +179,10 @@
 	                 <cfelse>
 	                  =
 	                 </cfif>
-	                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
+	                 <cfqueryparam value="#UCase(searchItem)#" cfsqltype="cf_sql_varchar">
 	                </cfif>			 
 				 </cfif>
-				
+				</cfif>
              </cfloop>     
 			 ORDER BY TOWN, LOCALITY, STREET_1, BUILDING_NUMBER, PART_ID
 			)

@@ -52,6 +52,7 @@
 	                <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
                     <!--- VRM can be an Array of VRMS to search, if we can an array then loop through it to get the
                           different VRMS in the query --->
+                   <cfif ListFindNoCase('vrm,manufacturer,model,body_type,shade,primary_col,seconday_col,text',searchKey) GT 0>
                     <cfif PreserveSingleQuotes(searchKey) IS "VRM" and isArray(searchItem)>
                     AND ( 
 					 <cfset iVrm=1>
@@ -76,6 +77,7 @@
 		                 <cfqueryparam value="#UCase(searchItem)#" cfsqltype="cf_sql_varchar">
 		                </cfif>
                     </cfif>
+				   </cfif>
 	             </cfloop> 
 				ORDER BY START_DATE DESC
 		  </cfquery> 
@@ -487,7 +489,7 @@
 			<cfloop query="qRead">
 			 <cfset vehicles[i]=StructNew()>
 		     <cfif FindNoCase("CRASH",ROLE) GT 0>
-		        <cfset vehicles[i].Role='RTC - <b><a href="../../nominal_details/code/documentview.cfm?str_doctype=CRASH&str_DocRef=#REASON#&crashDate=#DateFormat(FROM_DATE,"DD/MM/YYYY")#&#session.URLToken#" target="_blank">#REASON#</a></b>'>
+		        <cfset vehicles[i].Role='RTC - <b><a href="#REASON#" crashDate="#DateFormat(FROM_DATE,"DD/MM/YYYY")#" class="genieCrashLink">#REASON#</a></b>'>
 		     <cfelse>
 				 <cfif Len(REASON) IS 0>
 			   	  <cfset vehicles[i].Role=ROLE>	

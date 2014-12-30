@@ -41,49 +41,47 @@
       <cfset var qSearchResults="">
       <cfset var searchItem="">
       <cfset var searchKey="">
-	  <cfset var isTelSearch=StructFind(arguments.searchTerms,'ts.TEL_NO')>
+	  <cfset var isTelSearch=StructFind(arguments.searchTerms,'TEL_NO')>
       
-		  <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#">
+		  <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#" result="theSql">
           SELECT *
           FROM (
 	           SELECT ts.TEL_NO, ts.SOURCE, ts.SOURCE_ID, ts.PHONE_TYPE, ts.ELEC_COMMS, ts.DATE_FROM, ts.DATE_TO,
-               td.OWNER_USER, ts.NOTE, nvl(td.NOMINAL_REF,tr.NOMINAL_REF) AS NOMINAL_REF, td.ORGANISATION, td.CUSTODY_REF, td.CASE_REF, nvl(td.CRIME_REF,tr.CRIME_REF) AS CRIME_REF,
+               td.OWNER_USER, ts.NOTE, nvl(td.NOMINAL_REF,tr.NOMINAL_REF) AS NOMINAL_REF, td.ORGANISATION, td.CUSTODY_REF, 
+               td.CASE_REF, nvl(td.CRIME_REF,tr.CRIME_REF) AS CRIME_REF,
 			   td.OIS_LOG,td.INTEL_LOG
 		       FROM   browser_owner.TELEPHONE_SEARCH ts, browser_owner.TELEPHONE_USAGES td, browser_owner.telephone_roles tr
                WHERE ts.source_id=td.source_id(+)
                AND ts.source_id=tr.source_id(+)
-                <cfif Len(searchTerms.DATE_FROM1) GT 0 and Len("searchTerms.DATE_FROM2") IS 0>
-                 AND DATE_FROM=TO_DATE(<cfqueryparam value="#searchTerms.DATE_FROM1#" cfsqltype="cf_sql_varchar">)
-                <cfelseif  Len(searchTerms.DATE_FROM1) GT 0 and Len("searchTerms.DATE_FROM2") GT 0>
-                 AND DATE_FROM BETWEEN TO_DATE(<cfqueryparam value="#searchTerms.DATE_FROM1#" cfsqltype="cf_sql_varchar">) AND TO_DATE(<cfqueryparam value="#searchTerms.DATE_FROM2#" cfsqltype="cf_sql_varchar">)
+                <cfif Len(searchTerms.DATE_FROM1) GT 0 and Len(searchTerms.DATE_FROM2) IS 0>
+                 AND DATE_FROM=TO_DATE('#searchTerms.DATE_FROM1#','DD/MM/YYYY')
+                <cfelseif  Len(searchTerms.DATE_FROM1) GT 0 and Len(searchTerms.DATE_FROM2) GT 0>
+                 AND DATE_FROM BETWEEN TO_DATE('#searchTerms.DATE_FROM1#','DD/MM/YYYY') AND TO_DATE('#searchTerms.DATE_FROM2#','DD/MM/YYYY')
                 </cfif>
-                <cfif Len(searchTerms.DATE_TO1) GT 0 and Len("searchTerms.DATE_TO2") IS 0>
-                 AND DATE_TO=TO_DATE(<cfqueryparam value="#searchTerms.DATE_TO1#" cfsqltype="cf_sql_varchar">)
-                <cfelseif Len(searchTerms.DATE_FROM1) GT 0 and Len("searchTerms.DATE_FROM2") GT 0>
-                 AND DATE_TO BETWEEN TO_DATE(<cfqueryparam value="#searchTerms.DATE_TO1#" cfsqltype="cf_sql_varchar">) AND TO_DATE(<cfqueryparam value="#searchTerms.DATE_TO2#" cfsqltype="cf_sql_varchar">)
+                <cfif Len(searchTerms.DATE_TO1) GT 0 and Len(searchTerms.DATE_TO2) IS 0>
+                 AND DATE_TO=TO_DATE('#searchTerms.DATE_TO1#','DD/MM/YYYY')
+                <cfelseif Len(searchTerms.DATE_TO1) GT 0 and Len(searchTerms.DATE_TO2) GT 0>
+                 AND DATE_TO BETWEEN TO_DATE('#searchTerms.DATE_TO1#','DD/MM/YYYY') AND TO_DATE('#searchTerms.DATE_TO2#','DD/MM/YYYY')
                 </cfif>                  
-	             <cfloop collection="#arguments.searchTerms#" item="searchKey">
-                                                          
-	                <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
-                    <!--- VRM can be an Array of VRMS to search, if we can an array then loop through it to get the
-                          different VRMS in the query --->
-                    <cfif Left(PreserveSingleQuotes(searchKey),4) IS NOT "DATE">                                                                                                         
-		                <cfif Len(searchItem) GT 0>
-		                AND #PreserveSingleQuotes(searchKey)#
-		                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
-		                  LIKE
-		                 <cfelse>
-		                  =
-		                 </cfif>
-		                 <cfif searchKey IS "ELEC_COMMS">
-		                 	<cfqueryparam value="#Lcase(searchItem)#" cfsqltype="cf_sql_varchar">	
-		                 <cfelseif searchKey IS "NOTE">
-							<cfqueryparam value="#Ucase(searchItem)#" cfsqltype="cf_sql_varchar">			                 		                
-			             <cfelse>
-       		                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
-			             </cfif>
-		                </cfif>
-                    </cfif>
+	             <cfloop collection="#arguments.searchTerms#" item="searchKey">                                                       
+	                <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>            
+	                    <cfif Left(PreserveSingleQuotes(searchKey),4) IS NOT "DATE">                                                                                                         
+			                <cfif Len(searchItem) GT 0>
+			                AND UPPER(#iif(searchKey IS "tel_no",de('ts.'),de(''))##PreserveSingleQuotes(searchKey)#)
+			                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
+			                  LIKE
+			                 <cfelse>
+			                  =
+			                 </cfif>
+			                 <cfif searchKey IS "ELEC_COMMS">
+			                 	<cfqueryparam value="#Ucase(searchItem)#" cfsqltype="cf_sql_varchar">	
+			                 <cfelseif searchKey IS "NOTE">
+								<cfqueryparam value="#Ucase(searchItem)#" cfsqltype="cf_sql_varchar">			                 		                
+				             <cfelse>
+	       		                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
+				             </cfif>
+			                </cfif>
+	                    </cfif>
 	             </cfloop> 
 	           <cfif Len(isTelSearch) GT 0>
 			   UNION
@@ -108,12 +106,19 @@
 		                  =
 		                 </cfif>
 		                 <cfqueryparam value="#isTelSearch#" cfsqltype="cf_sql_varchar">
-					  )					   
+					  )	
+			   <cfif Len(searchTerms.DATE_FROM1) GT 0 and Len(searchTerms.DATE_FROM2) IS 0>
+                 AND TRUNC(CALL_DATE)=TRUNC(TO_DATE('#searchTerms.DATE_FROM1#','DD/MM/YYYY'))
+                <cfelseif  Len(searchTerms.DATE_FROM1) GT 0 and Len(searchTerms.DATE_FROM2) GT 0>
+                 AND CALL_DATE BETWEEN TO_DATE('#searchTerms.DATE_FROM1# 00:00:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#searchTerms.DATE_FROM2# 23:59:59','DD/MM/YYYY HH24:MI:SS')
+                </cfif>		  				   
 			   </cfif>
 			   ORDER BY 6 DESC
 		 )
 		 WHERE ROWNUM < 202
 		</cfquery> 
+       
+       <cflog file="telephoneDAO" type="information" text="#Len(searchTerms.DATE_TO1)# #Len(searchTerms.DATE_TO2)#   ---- #theSql.SQL#">
                 
        <cfreturn qSearchResults>      
      
@@ -435,20 +440,28 @@
      
      <cfset var qTelephones="">
      <cfset var qCrimeTels="">
+	 <cfset var qCust="">
+	 <cfset var qCase="">
      <cfset var crimeLinkText="">
      <cfset var iRow=1>
+	 <cfset var sStr="">
+	 <cfset var newStr="">
+	 <cfset var sSplit="">
+	 <cfset var i=0>
+	 <cfset var afterSlash1="">
+	 <cfset var beforeSlash1=""> 
      
 		<CFQUERY NAME = "qTelephones" DATASOURCE="#variables.WarehouseDSN#">
 		Select tu.owner_user, ts.tel_no, nvl(ts.note,'&nbsp;') AS TEXT, nvl(ts.phone_type,'&nbsp;') as type, ts.date_from , 
 		      nvl(ts.elec_comms,'&nbsp;') as elec_comms, ts.source, ts.source_id, nvl(tu.DATE_CREATED,ts.DATE_FROM) AS DATE_CREATED,
-		      tu.CUSTODY_REF, tu.CASE_REF, tu.INTEL_LOG, tu.OIS_LOG
+		      tu.CUSTODY_REF, '' AS CUSTODY_TYPE, tu.CASE_REF, '' AS CASE_TYPE, tu.INTEL_LOG, tu.OIS_LOG
 		From browser_owner.telephone_search ts, browser_owner.telephone_usages tu
 		where ts.source_id=tu.source_id(+)		
 		and tu.nominal_ref=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">
 		UNION
 		Select 'U' AS owner_user, ts.tel_no, nvl(ts.note,'&nbsp;') AS TEXT, nvl(ts.phone_type,'&nbsp;') as type, ts.date_from , 
 		      nvl(ts.elec_comms,'&nbsp;') as elec_comms, ts.source, ts.source_id, ts.DATE_FROM AS DATE_CREATED,
-		      '' AS CUSTODY_REF, '' AS CASE_REF, '' AS INTEL_LOG, '' AS OIS_LOG
+		      '' AS CUSTODY_REF, '' AS CUSTODY_TYPE, '' AS CASE_REF, '' AS CASE_TYPE, '' AS INTEL_LOG, '' AS OIS_LOG
 		From browser_owner.telephone_search ts, browser_owner.telephone_roles tr
 		where ts.source_id=tr.source_id(+)		
 		and not exists (SELECT 'Y' FROM browser_owner.telephone_usages tu1
@@ -462,7 +475,7 @@
          <!--- if data is from a crime document then pick up the role and the crime info --->
          <cfif SOURCE IS "CL">
            <cfquery name="qCrimeTels" DATASOURCE="#variables.WarehouseDSN#">
-            SELECT tr.ROLE_TYPE, o.ORG_CODE || '/' || O.SERIAL_NO ||'/' || DECODE(LENGTH(O.YEAR),1, '0' || o.YEAR, o.YEAR) Crime_Number
+            SELECT DISTINCT tr.ROLE_TYPE, o.ORG_CODE || '/' || O.SERIAL_NO ||'/' || DECODE(LENGTH(O.YEAR),1, '0' || o.YEAR, o.YEAR) Crime_Number
             FROM   browser_owner.telephone_roles tr, browser_owner.offence_search o
             WHERE  tr.source_id=<cfqueryparam value="#SOURCE_ID#" cfsqltype="cf_sql_varchar">
             AND    tr.crime_ref=o.crime_ref
@@ -478,6 +491,58 @@
            </cfif>
            
          </cfif>
+         <cfif SOURCE IS "CT">
+		 	 
+	 	    <cfset sStr=TEXT>
+			<cfset i=1>
+			<cfset newStr="">
+			<cfloop list="#sStr#" delimiters="/" index="sSplit">
+				<cfset iStart=Find(sSplit,sStr)>
+				<cfif i GT 1>
+					<cfset beforeSlash1=Mid(sStr,iStart-2,1)>
+					<cfset afterSlash1=Mid(sStr,iStart,1)>
+					<cfif beforeSlash1 IS NOT " " or afterSlash1 IS NOT " ">
+					  <cfset sSplit=" / "&sSplit>	
+					</cfif>		 		
+				</cfif>				
+				<cfset newStr &= sSplit>
+				<cfset i++>
+			</cfloop>
+			
+			<cfset querySetCell(qTelephones,"TEXT",newStr,iRow)>
+						 
+		 </cfif>
+         <cfif SOURCE IS "CU">
+		   <cfquery name="qCust" DATASOURCE="#variables.WarehouseDSN#">
+		   	   SELECT CUSTODY_TYPE
+			   FROM   browser_owner.CUSTODY_SEARCH cs
+			   WHERE  cs.CUSTODY_REF=<cfqueryparam value="#CUSTODY_REF#" cfsqltype="cf_sql_varchar">
+		   </cfquery>	 
+		   <cfif qCust.recordCount GT 0>
+			   <cfset querySetCell(qTelephones,"CUSTODY_TYPE",qCust.CUSTODY_TYPE,iRow)>
+			   <cfif Len(CASE_REF) GT 0>
+			     <cfset querySetCell(qTelephones,"CASE_TYPE",qCust.CUSTODY_TYPE,iRow)>	   
+			   </cfif>
+		   </cfif>
+		 </cfif>
+         <cfif SOURCE IS "CP">
+		  <cfif ListLen(CASE_REF,"/") IS "2">
+		 	<cfquery name="qCase" DATASOURCE="#variables.WarehouseDSN#">
+		   	   SELECT PD_REF
+			   FROM   browser_owner.PD_SEARCH ps
+			   WHERE  ps.CASE_ORG=<cfqueryparam value="#ListGetAt(CASE_REF,1,"/")#" cfsqltype="cf_sql_varchar">
+			   AND    ps.CASE_SERIAL=<cfqueryparam value="#ListGetAt(CASE_REF,2,"/")#" cfsqltype="cf_sql_varchar">
+			   AND    ps.CASE_YEAR=<cfqueryparam value="#Int(ListGetAt(CASE_REF,3,"/"))#" cfsqltype="cf_sql_varchar">
+		   </cfquery> 
+		   <cfif qCase.recordCount GT 0>
+			<cfif Left(qCase.PD_REF,3) IS "22/" OR Left(qCase.PD_REF,3) IS "23/">
+			  <cfset querySetCell(qTelephones,"CASE_TYPE",'NSPIS',iRow)>
+			<cfelse>
+			  <cfset querySetCell(qTelephones,"CASE_TYPE",'CRIMES',iRow)>
+			</cfif>	 		   
+		   </cfif>		   
+		  </cfif>
+		 </cfif>		 
          <cfset iRow=iRow+1>
         </cfloop>
                 

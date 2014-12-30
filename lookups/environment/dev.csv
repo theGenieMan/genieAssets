@@ -54,7 +54,7 @@ str_Image_Path|\genie_photos\
 str_Common_Dir|\genie_dev22\code\common\code\	
 str_Image_Temp_Dir|\\svr20200\s$\custody_photos\
 ErrorURL|/genie/code/error/
-str_Transforms|d:\inetpub\wwwroot\genie\code\transforms
+str_Transforms|d:\inetpub\wwwroot\documentViewers\transforms
 login_file|d:\genie_data\dev_pwd.txt
 NFLMS_Photos|\\svr20458\shogunphotos\
 NIR_Link|http://crimes.intranet.wmcpolice/forms/frmservlet?config=NIR_TEST&otherparams=P_SUBJECT=~nominalRef~+P_COLLAR=~userCollar~+P_USERID=~userId~
@@ -74,7 +74,7 @@ damsUrl|http://webdam.intranet.wmcpolice/applications/dam/index.cfm?event=locard
 damsFWXUrl|http://webdam.intranet.wmcpolice/fotoweb/locard/imageNumber.fwx?archiveId=5001&search=
 LPATeamLink|http://websvr.intranet.wmcpolice/applications/snt/teamPage.cfm?areaId=
 nominalQuickStepLink|http://development.intranet.wmcpolice/index_email.cfm?page_address=/applications/quickStep/listByNominal.cfm?taskStatus=OPEN&nominalRef=
-stopSearchNominalLink|http://svr20414/forms/frmservlet?config=SS_TEST&otherparams=P_SUBJECT=<nominalRef>+P_USERID=<userId>+P_COLLAR=<collar>+P_LOCATION=<location>+P_DATE=<dateOfCheck>+P_FORCE=<force>
+stopSearchNominalLink|http://svr20414/forms/frmservlet?config=SS_LIVE&otherparams=P_SUBJECT=<nominalRef>+P_USERID=<userId>+P_COLLAR=<collar>+P_LOCATION=<location>+P_DATE=<dateOfCheck>+P_FORCE=<force>
 stopSearchEnquiryLink|http://svr20414/forms/frmservlet?config=SS_TEST&otherparams=P_USERID=<userId>+P_COLLAR=<collar>+P_LOCATION=<location>+P_FORENAME1=<forename1>+P_SURNAME1=<surname1>+P_FORENAME2=<forename2>+P_SURNAME2=<surname2>+P_DOB=<dob>+P_DATE=<dateOfCheck>+P_FORCE=<force>
 drinkDriveNominalLink|http://svr20414/forms/frmservlet?config=DD_TEST&otherparams=P_SUBJECT=<nominalRef>+P_USERID=<userId>+P_COLLAR=<collar>+P_LOCATION=<location>+P_DATE=<dateOfCheck>+P_FORCE=<force>
 drinkDriveEnquiryLink|http://svr20414/forms/frmservlet?config=DD_TEST&otherparams=P_USERID=<userId>+P_COLLAR=<collar>+P_LOCATION=<location>+P_FORENAME1=<forename1>+P_SURNAME1=<surname1>+P_FORENAME2=<forename2>+P_SURNAME2=<surname2>+P_DOB=<dob>+P_DATE=<dateOfCheck>+P_FORCE=<force>
@@ -112,3 +112,6 @@ nomMergeGroups|SMA_GENIE_NOMINAL_MERGE
 genieAdminGroups|SMA_GENIE_ADMINISTRATORS
 bailCondsGroups|SM_PNSB OPERATOR,SM_PNSB SUPERVISOR,SMA_GENIE_ADMINISTRATORS
 packagePDFGroups|SMA_GENIE_ADMINISTRATORS,J PS Intel IPU,SM_FIELD INTELLIGENCE OFFICER,J PS Intel PNSB,J PS Intel
+CRIMESAttachmentsDir|\\svr20284\d$\assets\crimesAttachments\
+errorHtmlDirectory|\\svr20031\d$\genie_data\errors\
+errorHtmlPath|/genie_errors/

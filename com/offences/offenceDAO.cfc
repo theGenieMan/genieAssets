@@ -27,9 +27,12 @@
 						REP_HOOC_CODE, REP_ACPO_CAT, REP_ACPO_SUB, REP_OFF_CODE, REP_TITLE, 
 						FIRST_COMMITTED, LAST_COMMITTED, NCR_CODE, REPORT_METHOD, REPORT_DATE, 
 						DETECTED_FLAG, CUC_CODE, CREATED_DATE, VALIDATION_STATUS, HO_REPORTED_DATE, 
-						POST_CODE, PREMISE_KEY, LPA, GRID_REF, STATUS		
-				from BROWSER_OWNER.OFFENCE_SEARCH
-				where CRIME_REF = <cfqueryparam cfsqltype="CF_SQL_DECIMAL" value="#arguments.id#" />
+						POST_CODE, PREMISE_KEY, LPA, GRID_REF, STATUS,
+						DECODE(O.LAST_COMMITTED,'', TO_CHAR(O.FIRST_COMMITTED,'DD/MM/YYYY HH24:MI'),
+         				TO_CHAR(O.FIRST_COMMITTED,'DD/MM/YYYY HH24:MI') || ' and ' ||    TO_CHAR(O.LAST_COMMITTED,'DD/MM/YYYY HH24:MI')) Committed,
+     		 DECODE(O.DETECTED_FLAG,1,'Detected',2,'Undetected','Unknown') Detected_desc		
+				from BROWSER_OWNER.OFFENCE_SEARCH o
+				where CRIME_REF = <cfqueryparam value="#arguments.id.getCRIME_REF()#" cfsqltype="cf_sql_numeric" />
 			</cfquery>
 	
 			<cfscript>
@@ -61,6 +64,7 @@
 				obj.setREPORT_METHOD(qRead.REPORT_METHOD);
 				obj.setREPORT_DATE(qRead.REPORT_DATE);
 				obj.setDETECTED_FLAG(qRead.DETECTED_FLAG);
+				obj.setDETECTED_DESC(qRead.DETECTED_DESC);
 				obj.setCUC_CODE(qRead.CUC_CODE);
 				obj.setCREATED_DATE(qRead.CREATED_DATE);
 				obj.setVALIDATION_STATUS(qRead.VALIDATION_STATUS);
@@ -70,9 +74,79 @@
 				obj.setLPA(qRead.LPA);
 				obj.setGRID_REF(qRead.GRID_REF);
 				obj.setSTATUS(qRead.STATUS);
+				obj.setCOMMITTED(qRead.COMMITTED);
 				return obj;
 			</cfscript>
 		</cffunction>
+
+	<cffunction name="doOffenceEnquiry" output="false" access="public" returntype="array" hint="function the performs intel enquiry search">
+      <cfargument name="searchTerms" type="struct" required="true" hint="structure of search terms for address query">
+      
+      <cfset var qSearchResults="">
+      <cfset var searchItem="">
+      <cfset var searchKey="">
+      <cfset var offArray=arrayNew(1)>
+	  <cfset var thisOff="">
+	    
+		  <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#">		  	  
+		  	 SELECT * FROM (
+			 	SELECT o.CRIME_REF
+				FROM   BROWSER_OWNER.OFFENCE_SEARCH O
+    			WHERE   (1=1)				
+				<cfif Len(searchTerms.BEAT_CODE) GT 0>
+				 AND O.BEAT_CODE IN (<cfqueryparam value="#searchTerms.BEAT_CODE#" cfsqltype="cf_sql_varchar" list="true">)
+				</cfif>
+				<cfif Len(searchTerms.DATE_CREATED1) GT 0 and Len(searchTerms.DATE_CREATED2) IS 0>
+                 AND TRUNC(CREATED_DATE)=TRUNC(TO_DATE('#searchTerms.DATE_CREATED1#','DD/MM/YYYY'))
+                <cfelseif  Len(searchTerms.DATE_CREATED1) GT 0 and Len(searchTerms.DATE_CREATED2) GT 0>
+                 AND CREATED_DATE BETWEEN TO_DATE('#searchTerms.DATE_CREATED1# 00:00:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#searchTerms.DATE_CREATED2# 23:59:59','DD/MM/YYYY HH24:MI:SS')
+                </cfif>
+				<cfif Len(searchTerms.DATE_REPORTED1) GT 0 and Len(searchTerms.DATE_REPORTED2) IS 0>
+                 AND TRUNC(REPORT_DATE)=TRUNC(TO_DATE('#searchTerms.DATE_REPORTED1#','DD/MM/YYYY'))
+                <cfelseif  Len(searchTerms.DATE_REPORTED1) GT 0 and Len(searchTerms.DATE_REPORTED2) GT 0>
+                 AND REPORT_DATE BETWEEN TO_DATE('#searchTerms.DATE_REPORTED1# 00:00:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#searchTerms.DATE_REPORTED2# 23:59:59','DD/MM/YYYY HH24:MI:SS')
+                </cfif>    
+                <cfif Len(searchTerms.DATE_HOREPORTED1) GT 0 and Len(searchTerms.DATE_HOREPORTED2) IS 0>
+                 AND TRUNC(HO_REPORTED_DATE)=TRUNC(TO_DATE('#searchTerms.DATE_HOREPORTED1#','DD/MM/YYYY'))
+                <cfelseif  Len(searchTerms.DATE_HOREPORTED1) GT 0 and Len(searchTerms.DATE_HOREPORTED2) GT 0>
+                 AND HO_REPORTED_DATE BETWEEN TO_DATE('#searchTerms.DATE_HOREPORTED1# 00:00:00','DD/MM/YYYY HH24:MI:SS') AND TO_DATE('#searchTerms.DATE_HOREPORTED2# 23:59:59','DD/MM/YYYY HH24:MI:SS')
+                </cfif>    
+				<cfif Len(searchTerms.DATE_OFFENCE1) GT 0 and Len(searchTerms.DATE_OFFENCE2) IS 0>
+                 AND O.FIRST_COMMITTED BETWEEN TO_DATE('#searchTerms.DATE_OFFENCE1# 00:00:00','DD/MM/YYYY HH24:MI:SS')
+				                       AND     TO_DATE('#searchTerms.DATE_OFFENCE1# 23:59:59','DD/MM/YYYY HH24:MI:SS')                
+                <cfelseif  Len(searchTerms.DATE_OFFENCE1) GT 0 and Len(searchTerms.DATE_OFFENCE2) GT 0>
+                 AND ((O.FIRST_COMMITTED <= TO_DATE('#searchTerms.DATE_OFFENCE2#','DD/MM/YYYY') AND
+					     O.LAST_COMMITTED >= TO_DATE('#searchTerms.DATE_OFFENCE1#','DD/MM/YYYY'))
+						  OR (O.FIRST_COMMITTED BETWEEN TO_DATE('#searchTerms.DATE_OFFENCE1#','DD/MM/YYYY') AND TO_DATE('#searchTerms.DATE_OFFENCE2#','DD/MM/YYYY')))
+                </cfif>                
+                <cfloop collection="#arguments.searchTerms#" item="searchKey">
+	                <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
+					<cfif ListFindNoCase('BEAT_CODE,DATE_CREATED1,DATE_CREATED2,DATE_OFFENCE1,DATE_OFFENCE2,DATE_REPORTED1,DATE_REPORTED2,DATE_HOREPORTED1,DATE_HOREPORTED2',searchKey) IS 0>
+		                <cfif Len(searchItem) GT 0>
+		                AND #PreserveSingleQuotes(searchKey)#
+		                 <cfif Find("%",searchItem) OR Find("_",searchItem)>
+		                  LIKE
+		                 <cfelse>
+		                  =
+		                 </cfif>
+		                 <cfqueryparam value="#searchItem#" cfsqltype="cf_sql_varchar">
+		                </cfif>
+					</cfif>
+	             </cfloop> 
+				ORDER BY O.CREATED_DATE DESC
+			)
+			WHERE ROWNUM < 202				  
+		  </cfquery> 
+		  
+		  <cfloop query="qSearchResults">
+		  	  <cfset thisOff=createObject('component','genieObj.offences.offence')>
+			  <cfset thisOff.setCRIME_REF(CRIME_REF)>
+		  	  <cfset arrayAppend(offArray,readWestMerciaOffence(thisOff))>
+		  </cfloop>
+                
+       <cfreturn offArray>      
+     
+    </cffunction>  
 	    
 	<cffunction name="getNominalOffences" output="false" access="public" returntype="query" hint="returns a query nominal offences">
 	     <cfargument name="nominalRef" required="true" type="string" hint="nominal ref to get offences for">
@@ -89,7 +163,7 @@
 			 	   o.CRIME_REF, TO_CHAR(o.CREATED_DATE,'DD') AS REC_DAY, TO_CHAR(o.CREATED_DATE,'MM') AS REC_MON,
 					TO_CHAR(o.CREATED_DATE,'YYYY') AS REC_YEAR, o.FIRST_COMMITTED, o.LAST_COMMITTED,
 					TO_CHAR(O.DATE_FILED,'DD/MM/YYYY') AS DATE_FILED,NR.ELIMINATED,TO_CHAR(NR.DATE_ELIMINATED,'DD/MM/YYYY') AS DATE_ELIMINATED,
-					TO_CHAR(o.CREATED_DATE,'DD/MM/YYYY') AS CREATED_DATE
+					TO_CHAR(o.CREATED_DATE,'DD/MM/YYYY') AS CREATED_DATE, DETECTED_FLAG
 			FROM   browser_owner.NOMINAL_ROLES nr, browser_owner.OFFENCE_SEARCH o
 			WHERE  nr.CRIME_REF=o.CRIME_REF
 			AND    nr.NOMINAL_REF=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">
@@ -164,9 +238,11 @@
 	     <cfargument name="fromDate" type="string" required="true" hint="date to run search from">
 	     <cfargument name="toDate" type="string" required="true" hint="date to run search to">     
 	     <cfargument name="area" type="string" required="true" hint="area to run search for">          
-	     <cfargument name="groups" type="string" required="true" hint="list of offence groups to run search on">     
+	     <cfargument name="groups" type="string" required="true" hint="list of offence groups to run search on">
+		 <cfargument name="marker" type="string" required="true" hint="interest markers">
+		 <cfargument name="howToUseMarker" type="string" required="true" hint="how to use interest markers">            
 	     <cfargument name="dateType" type="string" required="true" hint="type of date to use">     
-	     <cfargument name="sort" type="string" required="true" hint="sort to use">          
+	     <cfargument name="sort" type="string" required="true" hint="sort to use">      		      
 	          
 	     <cfset var qSearch="">
 	     <cfset var groupId="">
@@ -208,7 +284,7 @@
 	               o.ORG_CODE || '/' || O.SERIAL_NO ||'/' || DECODE(LENGTH(O.YEAR),1, '0' || o.YEAR, o.YEAR) CRIME_NO,
 	               O.REC_HOMC_CODE AS HOMC, O.REC_HOOC_CODE AS HOOC, o.LPA
 	        FROM   BROWSER_OWNER.OFFENCE_SEARCH O, BROWSER_OWNER.GE_ADDRESSES addr
-                   <cfif Len(frmMarker) GT 0>
+                   <cfif Len(marker) GT 0>
                    , BROWSER_OWNER.OFFENCE_MARKERS om
                    </cfif>
 	        WHERE  (1=1)
@@ -229,15 +305,15 @@
 			            
 		        </cfif>
 		        )
-				<cfif Len(frmMarker) GT 0>
-				#frmHowToUseMarker#
+				<cfif Len(marker) GT 0>
+				#howToUseMarker#
 				(
-	              om.IF_CODE IN (<cfqueryparam value="#frmMarker#" cfsqltype="cf_sql_varchar" list="true">)
+	              om.IF_CODE IN (<cfqueryparam value="#marker#" cfsqltype="cf_sql_varchar" list="true">)
 				)
 	            </cfif>
             )        
 		  	</cfif>
-            <cfif Len(frmMarker) GT 0>
+            <cfif Len(marker) GT 0>
 			AND    O.CRIME_REF=om.CRIME_REF(+)
 			</cfif>			            
 	        <cfif dateType IS "DATE_CREATED">
@@ -322,7 +398,7 @@
 	     
 	   </cffunction> 
 	
-	   <cffunction name="getOffenceMarkerList" output="false" access="public" returntype="query" hint="returns a query offence markers">
+	<cffunction name="getOffenceMarkerList" output="false" access="public" returntype="query" hint="returns a query offence markers">
 	     <cfset var qMarkers="">
 	     
 	     <!--- query to get a distinct list of used offence markers --->
@@ -336,7 +412,7 @@
 	     
 	   </cffunction> 
 	
-	   <cffunction name="getRolesForCrime" output="false" access="public" returntype="query" hint="returns a query of roles for a crime">
+	<cffunction name="getRolesForCrime" output="false" access="public" returntype="query" hint="returns a query of roles for a crime">
 	   	 <cfargument name="crimeNo" type="string" required="true" hint="crimeNo to get roles for">  
 	   	   
 	     <cfset var qRoleInfo="">

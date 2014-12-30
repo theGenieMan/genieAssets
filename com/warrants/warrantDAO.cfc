@@ -82,7 +82,7 @@
 				       execution_method,nvl(offence,'&nbsp;') as offence,
 				       warrant_executed, warrant_type, notepad, classification
 				From   browser_owner.warrants w
-				Where w.nominal_ref = <cfqueryparam value="#str_CRO#" cfsqltype="cf_sql_varchar">
+				Where w.nominal_ref = <cfqueryparam value="#nominalRef#" cfsqltype="cf_sql_varchar">
 				Order By Date_Issued DESC
 				</cfquery>
 				

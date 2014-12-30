@@ -74,6 +74,7 @@
 	<cfproperty name="QUICK_STEP_FLAG" type="string" default="">
 	<cfproperty name="WARNING_SUB_TYPE" type="string" default="">
 	<cfproperty name="WARNINGS" type="warnings" default="">
+	<cfproperty name="WARNINGS_TEXT" type="string" default="">
 	<cfproperty name="PHOTOS" type="photos" default="">
 	<cfproperty name="TTL_FLAG" type="string" default="">                    	             	
 
@@ -146,7 +147,8 @@
 		variables.FS_CODE = "";				
 		variables.QUICK_STEP_FLAG = "";	
 		variables.WARNING_SUB_TYPE = "";
-		variables.WARNINGS = ArrayNew(1);	
+		variables.WARNINGS = ArrayNew(1);
+		variables.WARNINGS_TEXT = "";	
 		variables.PHOTOS = ArrayNew(1);
 		variables.TTL_FLAG = "";																					
 	</cfscript>
@@ -879,6 +881,15 @@
 	<cffunction name="setWARNINGS" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
 		<cfset variables.WARNINGS = arguments.val>
+	</cffunction> 
+
+	<cffunction name="getWARNINGS_TEXT" output="false" access="public" returntype="any">
+		<cfreturn variables.WARNINGS_TEXT>
+	</cffunction>
+
+	<cffunction name="setWARNINGS_TEXT" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.WARNINGS_TEXT = arguments.val>
 	</cffunction> 
 
 	<cffunction name="getPHOTOS" output="false" access="public" returntype="any">

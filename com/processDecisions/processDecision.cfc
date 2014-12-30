@@ -152,6 +152,10 @@
 		<cfreturn variables.DATE_FORMALISED>
 	</cffunction>
 
+	<cffunction name="getDATE_FORMALISED_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.DATE_FORMALISED,"DD/MM/YYYY")>
+	</cffunction>
+
 	<cffunction name="setDATE_FORMALISED" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
 		<cfif (IsDate(arguments.val)) OR (arguments.val EQ "")>
@@ -173,6 +177,10 @@
 	<cffunction name="getDOB" output="false" access="public" returntype="any">
 		<cfreturn variables.DOB>
 	</cffunction>
+	
+	<cffunction name="getDOB_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.DOB,"DD/MM/YYYY")>
+	</cffunction>	
 
 	<cffunction name="setDOB" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
@@ -249,6 +257,26 @@
 		<cfargument name="val" required="true">
 		<cfset variables.pdHearings = arguments.val>
 	</cffunction>
+	
+	<cffunction name="getCASE_NO" output="false" access="public" returntype="any">
+		<cfif Len(variables.CASE_ORG) GT 0
+		  AND Len(variables.CASE_SERIAL) GT 0
+		  AND Len(variables.CASE_YEAR) GT 0>
+			<cfreturn variables.CASE_ORG&"/"&variables.CASE_SERIAL&"/"&iif(Len(variables.CASE_YEAR) IS 1,de('0'),de(''))&variables.CASE_YEAR>
+		<cfelse>
+			<cfreturn ''>
+		</cfif>
+	</cffunction>
+	
+	<cffunction name="getCASE_TYPE" output="false" access="public" returntype="any">
+		
+		<cfif Left(variables.PD_REF,3) IS "22/" OR Left(variables.PD_REF,3) IS "23/">
+			<cfreturn 'NSPIS'>
+		<cfelse>
+			<cfreturn 'CRIMES'>
+		</cfif>
+		
+	</cffunction>	
         
 	<cffunction name="dump" output="false" access="public" returntype="any">
         <cfset var dump="">

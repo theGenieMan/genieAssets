@@ -132,7 +132,7 @@
 		<cfquery name="qFP" datasource="#variables.warehouseDSN#">
 		select   distinct CAR_EVENT_ID, REVIEW_DATE
 		from     BROWSER_OWNER.FAMILY_PROTECTION
-		WHERE    NOMINAL_REF='#str_CRO#'
+		WHERE    NOMINAL_REF='#nominalRef#'
         ORDER BY REVIEW_DATE DESC
 		</cfquery>
         

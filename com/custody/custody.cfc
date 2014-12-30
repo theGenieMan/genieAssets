@@ -38,7 +38,8 @@
 	<cfproperty name="CELL" type="string" default="">
 	<cfproperty name="PLACE_OF_ARREST" type="string" default="">    
     <cfproperty name="custodyReasons" type="genieObj.custody.custodyReason[]" default="ArrayNew(1)">
-    <cfproperty name="custodyDepartures" type="genieObj.custody.custodyDepartures[]" default="ArrayNew(1)">    
+    <cfproperty name="custodyDepartures" type="genieObj.custody.custodyDepartures[]" default="ArrayNew(1)">  
+	<cfproperty name="nominal" type="genieObj.nominal.nominal" default="">  
 
 	<cfscript>
 		//Initialize the CFC with the default properties values.
@@ -75,7 +76,8 @@
 		variables.CELL = "";
 		variables.PLACE_OF_ARREST = "";	
 		variables.custodyReasons = "";	
-		variables.custodyDepartures = "";						
+		variables.custodyDepartures = "";	
+		variables.nominal="";					
 	</cfscript>
 
 	<cffunction name="init" output="false" returntype="custody">
@@ -131,6 +133,18 @@
 		<cfreturn variables.DOB>
 	</cffunction>
 
+	<cffunction name="getDOB_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.DOB,"DD/MM/YYYY")>
+	</cffunction>
+
+	<cffunction name="getAGE" output="false" access="public" returntype="any">
+		<cfif Len(variables.DOB) GT 0>		
+			<cfreturn DateDiff("YYYY",variables.DOB,now())>
+		<cfelse>
+			<cfreturn ''>
+		</cfif>
+	</cffunction>
+
 	<cffunction name="setDOB" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
 		<cfif (IsDate(arguments.val)) OR (arguments.val EQ "")>
@@ -151,6 +165,10 @@
 
 	<cffunction name="getARREST_TIME" output="false" access="public" returntype="any">
 		<cfreturn variables.ARREST_TIME>
+	</cffunction>
+
+	<cffunction name="getARREST_TIME_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.ARREST_TIME,"DDD DD/MM/YYYY")&" "&TimeFormat(variables.ARREST_TIME,"HH:mm")>
 	</cffunction>
 
 	<cffunction name="setARREST_TIME" output="false" access="public" returntype="void">
@@ -328,6 +346,10 @@
 		<cfreturn variables.NEXT_REVIEW_DATE>
 	</cffunction>
 
+	<cffunction name="getNEXT_REVIEW_DATE_TEXT" output="false" access="public" returntype="any">
+		<cfreturn DateFormat(variables.NEXT_REVIEW_DATE,"DD/MM/YYYY")&" "&TimeFormat(variables.NEXT_REVIEW_DATE,"HH:mm")>
+	</cffunction>
+
 	<cffunction name="setNEXT_REVIEW_DATE" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
 		<cfif (IsDate(arguments.val)) OR (arguments.val EQ "")>
@@ -395,7 +417,7 @@
 		<cfset variables.custodyReasons = arguments.val>
 	</cffunction>
     
-	<cffunction name="getCustodyDepatures" output="false" access="public" returntype="any">
+	<cffunction name="getCustodyDepartures" output="false" access="public" returntype="any">
 		<cfreturn variables.custodyDepartures>
 	</cffunction>
 
@@ -403,6 +425,15 @@
 		<cfargument name="val" required="true">
 		<cfset variables.custodyDepartures = arguments.val>
 	</cffunction>    
+	
+	<cffunction name="getNominal" output="false" access="public" returntype="any">
+		<cfreturn variables.nominal>
+	</cffunction>
+
+	<cffunction name="setNominal" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.nominal = arguments.val>
+	</cffunction>   	
 
 	<cffunction name="dump" output="false" access="public" returntype="any">
         <cfset var dump="">

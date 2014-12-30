@@ -53,7 +53,12 @@
 		<cfargument name="crimePath" required="false" default="" type="String">
 		<cfargument name="intelPath" required="false" default="" type="String">
 		<cfargument name="intelB99Path" required="false" default="" type="String">
-		<cfargument name="redirectorUrl" required="false" default="" type="String">                                                                                                       
+		<cfargument name="redirectorUrl" required="false" default="" type="String">   
+		<cfargument name="nominalTempDir" required="false" default="" type="String">   
+		<cfargument name="custodyTempDir" required="false" default="" type="String">  
+		<cfargument name="caseTempDir" required="false" default="" type="String">  
+		<cfargument name="intelFTSTempDir" required="false" default="" type="String">
+		<cfargument name="crimeTempDir" required="false" default="" type="String">                                                                                                  
         
         <cfset variables.version="1.1.0.0">    
 		<cfset variables.dateServiceStarted=DateFormat(now(),"DDD DD-MMM-YYYY")&" "&TimeFormat(now(),"HH:mm:ss")>                                  
@@ -110,7 +115,12 @@
 		<cfset variables.crimePath=arguments.crimePath>
 		<cfset variables.intelPath=arguments.intelPath>
 		<cfset variables.intelB99Path=arguments.intelB99Path>
-		<cfset variables.redirectorUrl=arguments.redirectorUrl>                   
+		<cfset variables.redirectorUrl=arguments.redirectorUrl> 
+		<cfset variables.nominalTempDir=arguments.nominalTempDir>
+		<cfset variables.custodyTempDir=arguments.custodyTempDir>  
+		<cfset variables.caseTempDir=arguments.caseTempDir>
+		<cfset variables.intelFTSTempDir=arguments.intelFTSTempDir>   
+		<cfset variables.crimeTempDir=arguments.crimeTempDir>                 
                                   
         <cfset variables.nominalDAO=CreateObject("component","genieObj.nominal.nominalDAO").init(warehouseDSN=variables.warehouseDSN,
                                                                                                  warehouseDSN2=variables.warehouseDSN2,
@@ -373,6 +383,18 @@
                                                                                                        warehousePWD=variables.warehousePWD           
                                                                                                        )>
 
+        <cfset variables.stepDAO=CreateObject("component","genieObj.nominal.stepDAO").init(warehouseDSN=variables.warehouseDSN,
+                                                                                                       warehouseDSN2=variables.warehouseDSN2,
+                                                                                                       warehouseUID=variables.warehouseUID,
+                                                                                                       warehousePWD=variables.warehousePWD           
+                                                                                                       )>
+                                                                                                       
+        <cfset variables.attachmentsDAO=CreateObject("component","genieObj.attachments.attachmentsDAO").init(warehouseDSN=variables.warehouseDSN,
+                                                                                                       warehouseDSN2=variables.warehouseDSN2,
+                                                                                                       warehouseUID=variables.warehouseUID,
+                                                                                                       warehousePWD=variables.warehousePWD           
+                                                                                                       )>                                                                                                       
+
         <cfset variables.intelPackageDAO=CreateObject("component","genieObj.nominal.intelPackageDAO").init(warehouseDSN=variables.warehouseDSN,
                                                                                                        warehouseDSN2=variables.warehouseDSN2,
                                                                                                        warehouseUID=variables.warehouseUID,
@@ -412,7 +434,8 @@
 	 <cfargument type="string" name="pasteReq" required="false" default="N" hint="flag for whether a paste text file is required">        
 	 <cfargument type="string" name="auditReq" required="false" default="Y" hint="flag for whether an audit is reqd">
 	 <cfargument type="string" name="fromWebService" required="false" default="N" hint="flag for whether request is from web service">
-	 <cfargument type="struct" name="wsAudit" required="false" default="#structNew()#" hint="struct of audit data">          
+	 <cfargument type="struct" name="wsAudit" required="false" default="#structNew()#" hint="struct of audit data">   
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="UUID for search results">      
     	
      <cfset var nom=ArrayNew(1)>
      <cfset var warnings=ArrayNew(1)>
@@ -420,6 +443,8 @@
      <cfset var photoUrl=ArrayNew(1)>     
      <cfset var photoDates=ArrayNew(1)>          
      <cfset var photos=ArrayNew(1)>
+	 <cfset var nominalTargets="">
+	 <cfset var targets=ArrayNew(1)>
      <cfset var searchResult=StructNew()>
      <cfset var qNoms="">
      <cfset var thisNom="">
@@ -445,6 +470,8 @@
 	     
 	     <cfset ignore=QueryAddColumn(qNoms,"PHOTO_URL","VarChar",photoUrl)>
 	     <cfset ignore=QueryAddColumn(qNoms,"PHOTO_DATE","VarChar",photoDates)>   
+		  
+		 <cfset ignore=QueryAddColumn(qNoms,"TARGET","VarChar",variables.targetDAO.getNominalSearchTargets(ValueList(qNoms.NOMINAL_REF)))>    
                         
          <cfset searchResult.queryResult=qNoms>
          <cfset searchResult.recordCount=qNoms.recordCount>
@@ -462,37 +489,27 @@
          </cfloop>
          
 		 <cfif auditReq IS "Y">
-		 
-		   <cfif arguments.fromWebService IS "Y">
-		   		<cfset audit.enquiryUser=wsAudit.enquiryUser>
-				<cfset audit.enquiryUserName=wsAudit.enquiryUserName>
-				<cfset audit.requestFor=wsAudit.requestFor>
-				<cfset audit.reasonCode=wsAudit.reasonCode>
-				<cfset audit.reasonText=wsAudit.reasonText>   
-				<cfset audit.sessionId=wsAudit.sessionId>
-				<cfset audit.department=wsAudit.enquiryUserDept>
-		   <cfelse>
-		   		<cfset audit.enquiryUser=session.user.getUserId()>
-				<cfset audit.enquiryUserName=session.user.getFullName()>
-				<cfset audit.requestFor=session.audit_for>
-				<cfset audit.reasonCode=session.audit_code>
-				<cfset audit.reasonText=session.audit_details>  
-				<cfset audit.sessionId=session.thisUUID>
-				<cfset audit.department=session.user.getDepartment()> 		   	   
-		   </cfif>	 
 		 	 
-           <cfset doGenieAudit(userId=audit.enquiryUser,
-                             sessionId=audit.sessionId,
-                             reason=audit.reasonCode,
-                             reasonText=audit.reasonText,
-                             requestFor=audit.requestFor,
-                             fullName=audit.enquiryUserName,
+           <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
                              action='West Mercia Person Search',
                              fields=auditFieldData,
                              details='',
                              numberOfResults=searchResult.recordCount,
-							 department=audit.department)>           
+							 department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>
+							            
 	      </cfif>
+	      
+	      <cfif Len(arguments.searchUUID) GT 0>
+		  	  <cffile action="write" file="#variables.nominalTempDir##searchUUID#.txt" output="#ValueList(qNoms.NOMINAL_REF,",")#">
+		  </cfif>
     	     
      <cfreturn searchResult>
      
@@ -784,9 +801,30 @@
 	 <cfargument type="string" name="searchType" required="false" default="firearmsEnquiry" hint="type of search to perform, firearms enquiry or address enquiry">        
     	
      <cfset var result=structNew()>
+	 <cfset var auditFieldData=""> 
     
      <!--- call the West Mercia Firearms Address search query. A query is returned, use this to get an array of nominal objects --->
      <cfset result=variables.firearmsAddressDAO.doWestMerciaFirearmsAddressSearch(searchTerms=arguments.searchTerms,searchType=arguments.searchType)>
+    
+      <!--- format search data for logging --->
+        <cfloop collection="#arguments.searchTerms#" item="searchKey">
+           <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+           <cfif Len(searchItem) GT 0>
+            <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+           </cfif>
+         </cfloop>    
+                                                                                                                      
+         <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='West Mercia Firearms Address Search',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=result.qAddress.recordCount,
+                             department=session.user.getDepartment())>    
     	     
      <cfreturn result>
      
@@ -822,7 +860,10 @@
                              fields=auditFieldData,
                              details='',
                              numberOfResults=searchResult.recordCount,
-                             department=session.user.getDepartment())>                                                              
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                              
     
      <cfreturn searchResult>
      
@@ -946,7 +987,7 @@
     <cffunction name="doWestMerciaVehicleSearch" access="remote" returntype="any" output="false" hint="I call the West Mercia Vehicle search, returns query the search result">
 	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to thesearch">
     	
-     <cfset var searchResult=QueryNew("VEH_REF,VRM,Veh_Details,Information,Date_From,Date_To","VarChar,VarChar,VarChar,VarChar,Date,Date")>
+     <cfset var searchResult=QueryNew("VEH_REF,VRM,Veh_Details,Information,Date_From,Date_To,Type,Ref,Ref_Text,Reason,Usage,Text,Type2,Ref2,Ref_Text2","VarChar,VarChar,VarChar,VarChar,Date,Date,VarChar,VarChar,VarChar,VarChar,Varchar,VarChar,VarChar,VarChar,VarChar")>
      <cfset var qVehResultsSorted="">
      <cfset var vehicleMatches="">
      <cfset var auditFieldData="">
@@ -980,8 +1021,9 @@
 			
 			<cfset str_Info="">
 			
-				 <cfif Len(Nominal_Ref) GT 0 AND FindNoCase("CRASH",USAGE) IS 0>
-		
+				 <cfif Len(Nominal_Ref) GT 0 AND FindNoCase("CRASH",USAGE) IS 0 AND Len(CASE_URN) IS 0>
+		          
+		          <!---
 		 		  <cfset str_Nom_Link=variables.NominalLink&"str_CRO=#NOMINAL_REF#&str_NoMenu=YES">	
 			      <cfif Len(REASON) GT 0>
 				  <cfset str_Info=str_Info&REASON&" : <a href=""###NOMINAL_REF#"" onClick=""fullscreen('#str_Nom_Link#&#Session.URLToken#','Nom_Info')""><strong>#NOMINAL_REF#</strong>">
@@ -989,9 +1031,7 @@
 		 		  <cfset str_Info=str_Info&USAGE&" : <a href=""###NOMINAL_REF#"" onClick=""fullscreen('#str_Nom_Link#&#Session.URLToken#','Nom_Info')""><strong>#NOMINAL_REF#</strong>">		  
 			      </cfif>
                                     
-                    <cfset nominal=createObject("component","nominal.nominal").init()>
-                    <cfset nominal.setNOMINAL_REF(NOMINAL_REF)>
-                    <cfset nominal=variables.nominalDAO.readWestMerciaNominal(nominal)>              
+                                 
                                     
 				  <cfset str_Info=str_Info&" "&nominal.getFULL_NAME()&"</a>">	
 				  <cfif Len(TEXT) GT 0>
@@ -1000,13 +1040,25 @@
 					 </cfif>
 					<cfset str_Info=str_Info&TEXT>
 				  </cfif>
+				  --->
+				  
+				    <cfset nominal=createObject("component","nominal.nominal").init()>
+                    <cfset nominal.setNOMINAL_REF(NOMINAL_REF)>
+                    <cfset nominal=variables.nominalDAO.readWestMerciaNominal(nominal)> 
+				  
 		            <cfset row=QueryAddRow(searchResult,1)>
 		        	<cfset temp=QuerySetCell(searchResult,"VEH_REF",VEH_REF,x)>						
 		        	<cfset temp=QuerySetCell(searchResult,"VRM",VRM,x)>
 		        	<cfset temp=QuerySetCell(searchResult,"VEH_DETAILS",MANUFACTURER&" - "&MODEL&". "&BODY_TYPE&" "&SHADE&" "&PRIMARY_COL&" "&SECONDARY_COL&"<br>"&TEXT,x)>		  
 					<cfset temp=QuerySetCell(searchResult,"INFORMATION",str_Info,x)>	
 					<cfset temp=QuerySetCell(searchResult,"DATE_FROM",START_DATE,x)>
-					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>		
+					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>
+					<cfset temp=QuerySetCell(searchResult,"TEXT",TEXT,x)>
+					<cfset temp=QuerySetCell(searchResult,"REASON",REASON,x)>
+					<cfset temp=QuerySetCell(searchResult,"USAGE",USAGE,x)>
+					<cfset temp=QuerySetCell(searchResult,"TYPE","NOMINAL",x)>
+					<cfset temp=QuerySetCell(searchResult,"REF",NOMINAL_REF,x)>
+					<cfset temp=QuerySetCell(searchResult,"REF_TEXT",nominal.getFULL_NAME(),x)>		
 				 
 		         <cfelseif FindNoCase("CRASH",USAGE) GT 0>   
 		              
@@ -1016,24 +1068,40 @@
 		        	<cfset temp=QuerySetCell(searchResult,"VEH_DETAILS",MANUFACTURER&" - "&MODEL&". "&BODY_TYPE&" "&SHADE&" "&PRIMARY_COL&" "&SECONDARY_COL&"<br>"&TEXT,x)>		  
 		        	<cfset temp=QuerySetCell(searchResult,"INFORMATION","RTC : <strong><a href=""nominal_details/code/documentview.cfm?#session.URLToken#&str_DocRef=#REASON#&str_DocType=CRASH&crashDate=#DateFormat(START_DATE,"DD/MM/YYYY")#"" target=""_blank"">#REASON#</a></strong>",x)>	
 					<cfset temp=QuerySetCell(searchResult,"DATE_FROM",START_DATE,x)>
-					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>	              
+					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>
+					<cfset temp=QuerySetCell(searchResult,"REASON",REASON,x)>
+					<cfset temp=QuerySetCell(searchResult,"USAGE",USAGE,x)>
+					<cfset temp=QuerySetCell(searchResult,"TYPE","CRASH",x)>
+					<cfset temp=QuerySetCell(searchResult,"REF",REASON,x)>
+					<cfset temp=QuerySetCell(searchResult,"REF_TEXT",REASON,x)>
+					<cfset temp=QuerySetCell(searchResult,"TYPE2","INCIDENT",x)>
+					<cfset temp=QuerySetCell(searchResult,"REF2",INCIDENT_NO,x)>
+					<cfset temp=QuerySetCell(searchResult,"REF_TEXT2",INCIDENT_NO,x)>				              
 		              
 				 <cfelseif Len(Org_Code) GT 0>
 				  <cfset orgName=variables.organisationsDAO.getOrganisationName(orgCode=ORG_CODE)>
+				  <!---
 				  <Cfset str_Info=str_Info&"-"&orgName>
 				  <cfif Len(TEXT) GT 0>
 					 <cfif Len(str_Info) GT 0>
 						 <cfset str_info=str_info&"<br>">
 					 </cfif>
 					<cfset str_Info=str_Info&TEXT>
-				  </cfif>		  
+				  </cfif>
+				  --->		  
 		            <cfset row=QueryAddRow(searchResult,1)>
 		        	<cfset temp=QuerySetCell(searchResult,"VEH_REF",VEH_REF,x)>			
 		        	<cfset temp=QuerySetCell(searchResult,"VRM",VRM,x)>
 		        	<cfset temp=QuerySetCell(searchResult,"VEH_DETAILS",MANUFACTURER&" - "&MODEL&". "&BODY_TYPE&" "&SHADE&" "&PRIMARY_COL&" "&SECONDARY_COL,x)>		  
 					<cfset temp=QuerySetCell(searchResult,"INFORMATION",str_Info,x)>	
 					<cfset temp=QuerySetCell(searchResult,"DATE_FROM",START_DATE,x)>
-					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>		
+					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>
+					<cfset temp=QuerySetCell(searchResult,"REASON",REASON,x)>
+					<cfset temp=QuerySetCell(searchResult,"USAGE",USAGE,x)>
+					<cfset temp=QuerySetCell(searchResult,"TYPE","ORG",x)>
+					<cfset temp=QuerySetCell(searchResult,"REF",orgName,x)>
+					<cfset temp=QuerySetCell(searchResult,"REF_TEXT",orgName,x)>		
+				 		
 				 
 				 <cfelseif Len(Case_URN) GT 0>
                    <cfset qCaseDates=variables.processDecisionDAO.getCaseDatesCreated(case_Urn=CASE_URN)>
@@ -1066,7 +1134,25 @@
 		        	<cfset temp=QuerySetCell(searchResult,"VEH_DETAILS",MANUFACTURER&" - "&MODEL&". "&BODY_TYPE&" "&SHADE&" "&PRIMARY_COL&" "&SECONDARY_COL,x)>		  
 					<cfset temp=QuerySetCell(searchResult,"INFORMATION",str_Info,x)>	
 					<cfset temp=QuerySetCell(searchResult,"DATE_FROM",START_DATE,x)>
-					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>		  
+					<cfset temp=QuerySetCell(searchResult,"DATE_TO",END_DATE,x)>	
+					<cfset temp=QuerySetCell(searchResult,"REASON",REASON,x)>
+					<cfset temp=QuerySetCell(searchResult,"USAGE",USAGE,x)>
+					<cfset temp=QuerySetCell(searchResult,"TYPE","CASE",x)>
+					<cfset temp=QuerySetCell(searchResult,"REF",CASE_URN,x)>
+					<cfset temp=QuerySetCell(searchResult,"REF_TEXT",CASE_URN,x)>
+					
+					<cfif Len(NOMINAL_REF) GT 0>
+						<cfset nominal=createObject("component","nominal.nominal").init()>
+	                    <cfset nominal.setNOMINAL_REF(NOMINAL_REF)>
+	                    <cfset nominal=variables.nominalDAO.readWestMerciaNominal(nominal)>
+						<cfset temp=QuerySetCell(searchResult,"TYPE2","NOMINAL",x)>
+						<cfset temp=QuerySetCell(searchResult,"REF2",NOMINAL_REF,x)>
+						<cfset temp=QuerySetCell(searchResult,"REF_TEXT2",nominal.getFULL_NAME(),x)>
+					<cfelse>
+						<cfset temp=QuerySetCell(searchResult,"TYPE2","",x)>
+						<cfset temp=QuerySetCell(searchResult,"REF2","",x)>
+						<cfset temp=QuerySetCell(searchResult,"REF_TEXT2","",x)> 
+					</cfif>													  
 				  
 				 <cfelse>
 				  <cfif Len(TEXT) GT 0>
@@ -1111,6 +1197,12 @@
 			<cfset temp=QuerySetCell(searchResult,"INFORMATION",VEH_USAGE&": <strong><a href=""nominal_details/code/documentview.cfm?#session.URLToken#&str_DocRef=#CRIME_NO#&str_DocType=CRIME07&REC_DAY=#REC_DAY#&REC_MON=#REC_MON#&REC_YEAR=#REC_YEAR#&Crimes_Ref=#CRIME_REF#"" target=""_blank"">#CRIME_NO#</a></strong>",x)>	
 			<cfset temp=QuerySetCell(searchResult,"DATE_FROM",CRIME_FIRST_DATE,x)>
 			<cfset temp=QuerySetCell(searchResult,"DATE_TO",CRIME_LAST_DATE,x)>	
+			<cfset temp=QuerySetCell(searchResult,"REASON",'',x)>
+			<cfset temp=QuerySetCell(searchResult,"USAGE",VEH_USAGE,x)>
+			<cfset temp=QuerySetCell(searchResult,"TYPE","CRIME",x)>
+			<cfset temp=QuerySetCell(searchResult,"REF",CRIME_NO,x)>
+			<cfset temp=QuerySetCell(searchResult,"REF_TEXT",CRIME_NO,x)>		
+				 
             <cfset arrHasIntel[x]="">			
 			<cfset x=x+1>
 		   </cfloop>
@@ -1147,7 +1239,10 @@
                              fields=auditFieldData,
                              details='',
                              numberOfResults=qVehResultsSorted.recordCount,
-                             department=session.user.getDepartment())>                                                              
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                 
 
      <cfreturn qVehResultsSorted>
      
@@ -1179,7 +1274,10 @@
 	                             fields=StripCr(searchTerms),
 	                             details='',
 	                             numberOfResults=0,
-                                 department=session.user.getDepartment())>                                                         
+                                 department=session.user.getDepartment(),
+								 ethnicCode=session.ethnic_code,
+								 requestCollar=session.audit_for_collar,
+								 requestForce=session.audit_for_force)>                                                          
     	     
      </cfif>	     
     
@@ -1268,6 +1366,7 @@
      <cfset var nominal="">
      <cfset var hasIntel=arrayNew(1)>
      <cfset var crimes=arrayNew(1)>
+	 <cfset var offence="">
      <cfset var temp="">
      
      <!--- call the West Midlandsperson search web service. A xml object is returned --->
@@ -1288,7 +1387,10 @@
         
         <!--- get offence details if they exist --->
         <cfif Len(CRIME_REF) GT 0>
-         <cfset ArrayAppend(crimes,variables.offenceDAO.readWestMerciaOffence(id=CRIME_REF))>
+		 <cfset offence=createObject("component","offences.offence").init()>
+		 <cfset offence.setCRIME_REF(CRIME_REF)>	
+		 <cfset offence=variables.offenceDAO.readWestMerciaOffence(id=offence)>
+         <cfset ArrayAppend(crimes,offence.getCRIME_NO())>
         <cfelse>
          <cfset ArrayAppend(crimes,"")>   
         </cfif>
@@ -1297,7 +1399,7 @@
      
      <cfset temp=QueryAddColumn(searchResult,"NOMINAL_NAME","VarChar",nominals)>
      <cfset temp=QueryAddColumn(searchResult,"HAS_INTEL","VarChar",hasIntel)> 
-     <cfset temp=QueryAddColumn(searchResult,"CRIME_INFO","VarChar",crimes)>          
+     <cfset temp=QueryAddColumn(searchResult,"CRIME_NO","VarChar",crimes)>          
                                                               
       <!--- format search data for logging --->
         <cfloop collection="#arguments.searchTerms#" item="searchKey">
@@ -1318,7 +1420,10 @@
                              fields=auditFieldData,
                              details='',
                              numberOfResults=searchResult.recordCount,
-                             department=session.user.getDepartment())>                                                              
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                
     
      <cfreturn searchResult>
      
@@ -1468,25 +1573,597 @@
                              fields='searchText='&arguments.searchText&",division="&arguments.division&",fromDate="&arguments.fromDate&',toDate='&arguments.toDate&',order='&arguments.order&'relevance='&arguments.relevance&',accessLevel='&accessLevel,
                              details='',
                              numberOfResults=result.recordCount,
-                             department=session.user.getDepartment())>    
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>      
     	     
      <cfreturn result>
      
     </cffunction>  
     
+    <cffunction name="doCustodyWhiteboard" access="remote" returntype="any" output="false" hint="performs a custody whiteboard search">
+	 <cfargument type="string" name="custodySuite" required="true" hint="custody suite to get whiteboard for">
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required"> 
+	 	
+     <cfset var custs="">
+	 <cfset var iCust=0>
+	 <cfset var lisCusts="">
+    
+     <cfset custs=variables.custodyDAO.doCustodyWhiteboard(custodySuite=custodySuite)>
+
+     <cfloop from="1" to="#ArrayLen(custs)#" index="iCust">
+   	   <cfset custs[iCust].setNOMINAL(getWestMerciaNominalDetail(nominalRef=custs[iCust].getNOMINAL_REF(),photosRequired='N',warningsRequired='Y'))>
+	   <cfset lisCusts=listAppend(lisCusts,custs[iCust].getCUSTODY_REF()&"|"&custs[iCust].getCUSTODY_TYPE(),",")>
+	 </cfloop>
+	 
+     <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Custody Whiteboard',
+                             fields='custodySuite='&arguments.custodySuite,
+                             details='',
+                             numberOfResults=arrayLen(custs),
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>     
+                             
+     <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.custodyTempDir##searchUUID#.txt" output="#lisCusts#">
+	 </cfif>                        
+    	     
+     <cfreturn custs>
+     
+    </cffunction>      
+    
+    <cffunction name="doCustodyEnquiry" access="remote" returntype="any" output="false" hint="performs a custody enquiry search">
+	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to the DAO search">
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required"> 
+    	
+     <cfset var custs="">
+	 <cfset var iCust=0>
+     <cfset var auditFieldData="">
+     <cfset var searchItem="">
+     <cfset var searchKey=""> 
+	 <cfset var lisCusts="">    
+          
+     <cfset custs=variables.custodyDAO.doCustodyEnquiry(searchTerms=arguments.searchTerms)>
+	  
+	 <cfloop from="1" to="#ArrayLen(custs)#" index="iCust">
+   	   <cfset custs[iCust].setNOMINAL(getWestMerciaNominalDetail(nominalRef=custs[iCust].getNOMINAL_REF(),photosRequired='N',warningsRequired='Y'))>
+	   <cfset lisCusts=listAppend(lisCusts,custs[iCust].getCUSTODY_REF()&"|"&custs[iCust].getCUSTODY_TYPE(),",")>
+	 </cfloop> 
+                                                              
+      <!--- format search data for logging --->
+        <cfloop collection="#arguments.searchTerms#" item="searchKey">
+           <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+           <cfif Len(searchItem) GT 0>
+            <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+           </cfif>
+         </cfloop>    
+                                                              
+         <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Custody Enquiry',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=arrayLen(custs),
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                              
+    
+      <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.custodyTempDir##searchUUID#.txt" output="#lisCusts#">
+	  </cfif>  
+    
+     <cfreturn custs>
+     
+    </cffunction>  
+    
+    <cffunction name="doPDEnquiry" access="remote" returntype="any" output="false" hint="performs a custody enquiry search">
+	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to the DAO search">
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required"> 
+    	
+     <cfset var pds="">
+	 <cfset var iPd=0>
+     <cfset var auditFieldData="">
+     <cfset var searchItem="">
+     <cfset var searchKey=""> 
+	 <cfset var lisPDs="">    
+          
+     <cfset pds=variables.processDecisionDAO.doPDEnquiry(searchTerms=arguments.searchTerms)>
+	
+	 <cfloop from="1" to="#ArrayLen(pds)#" index="iPd">
+	   <cfset lisPds=listAppend(lisPds,pds[iPd].getCASE_NO()&"|"&pds[iPd].getCASE_TYPE(),",")>
+	 </cfloop> 
+	
+     <!--- format search data for logging --->
+     <cfloop collection="#arguments.searchTerms#" item="searchKey">
+       <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+       <cfif Len(searchItem) GT 0>
+        <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+       </cfif>
+     </cfloop>
+	
+	 <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Process Decision Enquiry',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=arrayLen(pds),
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                
+    
+      <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.caseTempDir##searchUUID#.txt" output="#lisPds#">
+	  </cfif>  
+    
+     <cfreturn pds>
+     
+    </cffunction>        
+    
+    <cffunction name="doIntelEnquiry" access="remote" returntype="any" output="false" hint="performs a custody enquiry search">
+	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to the DAO search">
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required">
+	 <cfargument type="string" name="includeNominals" required="false" default="N" hint="include nominals indexed on intel log">  
+    	
+     <cfset var intel="">
+	 <cfset var iInt=0>
+     <cfset var auditFieldData="">
+     <cfset var searchItem="">
+     <cfset var searchKey=""> 
+	 <cfset var lisIntel="">  
+	 <cfset var logData="">
+	 <cfset var arrNominals="">  
+	 <cfset var qNomsOnLog="">
+          
+     <cfset intel=variables.intelDAO.doIntelEnquiry(searchTerms=arguments.searchTerms)>
+	
+	 <cfloop from="1" to="#ArrayLen(intel)#" index="iInt">
+	   <cfset logData=intel[iInt].getLOG_REF()&"|"&intel[iInt].getSECURITY_ACCESS_LEVEL()>
+	 	<cfif intel[iInt].getHAND_CODE() IS "5" AND Len(intel[iInt].getHAND_GUIDANCE()) GT 0>
+	   		<cfset logData &= "|Y|"&Replace(intel[iInt].getHAND_GUIDANCE(),chr(10),"~","ALL")>
+	 	<cfelse>
+	   		<cfset logData &= "|N|None">
+	 	</cfif>		 
+	   <cfset lisIntel=listAppend(lisIntel,logData,",")>
+	   <cfif arguments.includeNominals IS "Y">
+	   	   <cfset arrNominals=arrayNew(1)>
+	       <cfset qNomsOnLog=variables.intelDAO.getNominalsOnLog(intel[iInt].getLOG_REF())>
+		   <cfloop query="qNomsOnLog">
+			  <cfset arrayAppend(arrNominals,getWestMerciaNominalDetail(NOMINAL_REF))>	   
+		   </cfloop>	
+		   <cfset intel[iInt].setINDEXED_NOMINALS(arrNominals)>
+	   </cfif>   
+	 </cfloop> 
+     
+     <!--- format search data for logging --->
+     <cfloop collection="#arguments.searchTerms#" item="searchKey">
+           <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+           <cfif Len(searchItem) GT 0>
+            <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+           </cfif>
+     </cfloop>
+     	
+	 <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Intelligence Enquiry',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=arrayLen(intel),
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                
+    
+      <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.intelFTSTempDir##searchUUID#.txt" output="#lisIntel#">
+	  </cfif>  
+    
+     <cfreturn intel>
+     
+    </cffunction>      
+
+    <cffunction name="doOffenceEnquiry" access="remote" returntype="any" output="false" hint="performs an offence enquiry search">
+	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to the DAO search">
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required"> 
+    	
+     <cfset var offs="">
+	 <cfset var iOffs=0>
+     <cfset var auditFieldData="">
+     <cfset var searchItem="">
+     <cfset var searchKey=""> 
+	 <cfset var lisOffs="">    
+          
+     <cfset offs=variables.offenceDAO.doOffenceEnquiry(searchTerms=arguments.searchTerms)>
+	  
+	 <cfloop from="1" to="#ArrayLen(offs)#" index="iOff">   	   
+	   <cfset lisOffs=listAppend(lisOffs,offs[iOff].getCRIMENO()&"|"&offs[iOff].getCRIME_REF,",")>
+	 </cfloop> 
+                                                              
+      <!--- format search data for logging --->
+        <cfloop collection="#arguments.searchTerms#" item="searchKey">
+           <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+           <cfif Len(searchItem) GT 0>
+            <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+           </cfif>
+         </cfloop>    
+                                                              
+         <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Offence Enquiry',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=arrayLen(offs),
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                 
+    
+      <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.crimeTempDir##searchUUID#.txt" output="#lisOffs#">
+	  </cfif>  
+    
+     <cfreturn offs>
+     
+    </cffunction>
+
+    <cffunction name="doPropertyEnquiry" access="remote" returntype="any" output="false" hint="performs a property enquiry search">
+	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to the DAO search">
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required"> 
+    	
+     <cfset var auditFieldData="">
+     <cfset var searchItem="">
+     <cfset var searchKey=""> 
+	 <cfset var lisCrimes="">
+	 <cfset var crimes="">    
+          
+     <cfset crimes=variables.propertyDAO.doPropertyEnquiry(searchTerms=arguments.searchTerms)>
+	
+	 <cfloop query="crimes">
+	  <cfif ListFind(lisCrimes,CRIME_NUMBER&"|"&CRIME_REF,",") IS 0>
+	   <cfset lisCrimes=listAppend(lisCrimes,CRIME_NUMBER&"|"&CRIME_REF,",")>
+	  </cfif>
+	 </cfloop> 
+	
+     <!--- format search data for logging --->
+     <cfloop collection="#arguments.searchTerms#" item="searchKey">
+       <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+       <cfif Len(searchItem) GT 0>
+        <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+       </cfif>
+     </cfloop>
+	
+	 <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Property Enquiry',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=crimes.recordCount,
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                 
+    
+      <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.crimeTempDir##searchUUID#.txt" output="#lisCrimes#">
+	  </cfif>  
+    
+     <cfreturn crimes>
+     
+    </cffunction>  
+    
+  <cffunction name="doWarningMarkerSearch" access="remote" returntype="any" output="false" hint="does a search for nominals with given warning markers">
+     <cfargument name="frmWarnings" required="true" type="string" hint="csv list of warning codes to search on">
+	 <cfargument name="frmCurrentOnly" required="true" type="string" hint="Y / N is the warning marker current">
+	 <cfargument name="frmHowToUseMarker" required="true" type="string" hint="ALL / ANY does the nominal have to have ALL or ANY of the markers">
+	 <cfargument name="frmSortType" required="false" default="ALPHABETICAL" type="string" hint="Way to order the results">
+	 <cfargument name="frmDateFrom" required="false" default="" type="string" hint="date marked from">
+	 <cfargument name="frmDateTo" required="false" default="" type="string" hint="date marked to">
+	 <cfargument name="frmAgeFrom" required="false" default="" type="string" hint="age of nominal from">
+	 <cfargument name="frmAgeTo" required="false" default="" type="string" hint="age of nominal to">
+	 <cfargument name="frmSex" required="false" default="" type="string" hint="sex of nominal">
+	 <cfargument name="frmPostTown" required="false" default="" type="string" hint="current town of persons address">
+	 <cfargument name="searchUUID" required="false" default="" type="string" hint="uuid to create nominal list file from">      	    	      	    	
+     
+     <cfset var result=structNew()>
+  	 <cfset var validationFnc=CreateObject("component","applications.cfc.validation")>
+  	 <cfset var auditFieldData="">
+	 <cfset var thisNominal="">
+	 <cfset var lisNominals="">
+	    	      
+     <cfset result.valid=true>
+     <cfset result.errors="">
+	 <cfset result.nominals=arrayNew(1)>
+     
+     <cfif Len(frmWarnings) IS 0>     
+       <cfset result.valid=false>
+       <cfset result.errors=ListAppend(result.errors,"You must select some warnings to search on","|")>	              
+     </cfif>
+     
+     <cfif result.valid>
+                         
+         
+        <cfset result.query=variables.warningsDAO.doWarningMarkerSearch( frmWarnings,
+																		 frmCurrentOnly,
+																		 frmHowToUseMarker,
+		                                                                 frmDateFrom,
+                                                                         frmDateTo,
+                                                                         frmAgeFrom,
+																		 frmAgeTo,
+																		 frmSex,
+																		 frmPostTown,
+                                                                         frmSortType)>
+         
+       	<cfloop query="result.query" startrow="1" endrow="201">
+		   <cfset thisNominal=getWestMerciaNominalDetail(NOMINAL_REF,"N","Y")>
+		   <cfset thisNominal.setLATEST_PHOTO(getWestMerciaNominalLatestPhoto(NOMINAL_REF))>
+		   <cfset thisNominal.setLATEST_ADDRESS(getWestMerciaNominalLatestAddress(NOMINAL_REF))>		      
+		   <cfset thisNominal.setLATEST_GRIDREF(getWestMerciaNominalLatestGridRef(NOMINAL_REF))>
+		   <cfset thisNominal.setWARNINGS(getWestMerciaNominalWarnings(NOMINAL_REF))>   		      	   
+		   <cfset arrayAppend(result.nominals,thisNominal)>
+		   <cfset lisNominals=listAppend(lisNominals,NOMINAL_REF,",")>
+		</cfloop>  
+         
+         <cfset auditFieldData="Warnings: #frmWarnings#, Current: #frmCurrentOnly#, SearchType: #frmHowToUseMarker#, From: #frmDateFrom#, To: #frmDateTo#, Order:#frmSortType#">                                                              
+         
+         
+         <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Warning Marker Search',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=result.query.recordCount,
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>         
+                             
+      <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.nominalTempDir##searchUUID#.txt" output="#lisNominals#">
+	  </cfif>                              
+                                                                                               
+                                                                  
+     </cfif>
+                                                                         	     
+     <cfreturn result>
+     
+    </cffunction>     
+
+    <cffunction name="doCrimeBrowserSearch" access="remote" returntype="any" output="false" hint="does crime browser search, returns a struct of validity of request and the query of results">
+     <cfargument name="Form" required="true" type="struct" hint="Form data to run search on">	
+	 <cfargument type="string" name="searchUUID" required="false" default="" hint="unique id if a list of search results is required">     	
+     
+     <cfset var result=structNew()>
+  	 <cfset var validationFnc=CreateObject("component","applications.cfc.validation")>
+  	 <cfset var auditFieldData="">
+	 <cfset var sntLpt="">
+	 <cfset var idxArea="">
+	 <cfset var sntDetails="">
+	 <cfset var pzDetails=""> 
+	 <cfset var pzBeats="">
+	 <cfset var lisOffs="">
+  	      
+     <cfset result.valid=true>
+     <cfset result.errors="">
+     
+     <cfif Len(Form.frmDateFrom) IS 0>
+       <cfset result.valid=false>
+       <cfset result.errors=ListAppend(result.errors,"You must enter a From Date","|")>	  
+     <cfelse>
+	    <!--- check the date is valid --->
+            <cfif validationFnc.checkDate(Form.frmDateFrom) IS "NO">
+				<cfset result.valid=false>
+			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Date","|")>			
+            </cfif>			
+     </cfif>
+     
+     <cfif Len(Form.frmDateFrom) IS 0>
+       <cfset result.valid=false>     
+       <cfset result.errors=ListAppend(result.errors,"You must enter a To Date","|")>	              
+     <cfelse>
+	    <!--- check the date is valid --->
+            <cfif validationFnc.checkDate(Form.frmDateTo) IS "NO">
+				<cfset result.valid=false>
+			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Date","|")>						            
+            </cfif>
+     </cfif>
+     
+     <cfif Len(Form.frmTimeFrom) IS 0>
+       <cfset result.valid=false>     
+       <cfset result.errors=ListAppend(result.errors,"You must enter a From Time","|")>	              
+     <cfelse>
+	    <!--- check the date is valid --->
+            <cfif validationFnc.checkTime(Form.frmTimeFrom) IS "NO">
+				<cfset result.valid=false>
+			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Time","|")>						            
+            </cfif>
+     </cfif>     
+
+     <cfif Len(Form.frmTimeTo) IS 0>
+       <cfset result.valid=false>     
+       <cfset result.errors=ListAppend(result.errors,"You must enter a To Time","|")>	              
+     <cfelse>
+	    <!--- check the date is valid --->
+            <cfif validationFnc.checkTime(Form.frmTimeTo) IS "NO">
+				<cfset result.valid=false>
+			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid To Time","|")>						            
+            </cfif>
+     </cfif>     
+     
+     <cfif Len(Form.frmOffenceGroupings) IS 0>     
+       <cfset result.valid=false>
+       <cfset result.errors=ListAppend(result.errors,"You must select at least one theme","|")>	              
+     </cfif>
+     
+     <cfif result.valid>
+        
+        <cfset Form.frmDateFrom=Form.frmDateFrom&" "&form.frmTimeFrom> 
+        <cfset Form.frmDateTo=Form.frmDateTo&" "&form.frmTimeTo>  
+
+		<!--- convert any PZ codes to Beat for looking up crimes --->
+		<cfloop list="#Form.frmArea#" index="idxArea" delimiters=",">
+			<cfset pzDetails=isPatrolZone(idxArea)>
+			<cfif pzDetails.isPZ>
+				<cfset pzBeats=ListAppend(pzBeats,pzDetails.beatCodes,",")>
+			</cfif>
+		</cfloop>  
+		
+		<!--- snts have been converted to LPTS --->
+		<cfif Len(pzBeats) GT 0>
+			<cfset Form.frmArea=pzBeats>
+		</cfif>	 
+
+		<!--- convert any SNT codes to LPTs for looking up crimes --->
+		<cfloop list="#Form.frmArea#" index="idxArea" delimiters=",">
+			<cfset sntDetails=isSnt(idxArea)>
+			<cfif sntDetails.isSnt>
+				<cfset sntLpt=ListAppend(sntLpt,sntDetails.lpaCodes,",")>
+			</cfif>
+		</cfloop>  
+		
+		<!--- snts have been converted to LPTS --->
+		<cfif Len(sntLpt) GT 0>
+			<cfset Form.frmArea=sntLpt>
+		</cfif>	       
+		 
+        <cfset result.query=variables.offenceDAO.doCrimeBrowserSearch( Form.frmDateFrom,
+                                                                       Form.frmDateTo,
+                                                                       Form.frmArea,
+                                                                       Form.frmOffenceGroupings,
+                                                                       Form.frmMarker,
+                                                                       Form.frmHowToUseMarker,
+                                                                       Form.frmDateType,
+                                                                       Form.frmSortType)>
+         
+	    <cfloop query="result.query">   	   
+	       <cfset lisOffs=listAppend(lisOffs,CRIME_NO&"|"&CRIME_REF,",")>
+	    </cfloop> 
+	    
+	  <cfif Len(arguments.searchUUID) GT 0>
+	 	<cffile action="write" file="#variables.crimeTempDir##searchUUID#.txt" output="#lisOffs#">
+	  </cfif>          
+         
+         <cfset auditFieldData="From: #Form.frmDateFrom#, To: #Form.frmDateTo#, Area: #Form.frmArea#, Groups: #Form.frmOffenceGroupings#, Date Type:#Form.frmDateType#">                                                              
+         
+         
+         <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Crime Browser Search',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=result.query.recordCount,
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                           
+                                                                  
+     </cfif>
+                                                                         	     
+     <cfreturn result>
+     
+    </cffunction> 
+
+	<cffunction name="doFirearmsSerialCertif" access="remote" returntype="any" output="false" hint="performs a firearms serial / certif search">
+	 <cfargument type="struct" name="searchTerms" required="true" hint="Structure of search terms to be passed to the DAO search">	  
+    	
+     <cfset var auditFieldData="">
+     <cfset var searchItem="">
+     <cfset var searchKey=""> 
+	 <cfset var lisCrimes="">
+	 <cfset var nominals="">    
+          
+     <cfset nominals=variables.firearmsNominalDAO.doSerialCertifSearch(serialNo=arguments.searchTerms.serial_no,
+	                                                                   certifNo=arguments.searchTerms.certificate_no)>
+		 
+     <!--- format search data for logging --->
+     <cfloop collection="#arguments.searchTerms#" item="searchKey">
+       <cfset searchItem=StructFind(arguments.searchTerms,searchKey)>           
+       <cfif Len(searchItem) GT 0>
+        <cfset auditFieldData=ListAppend(auditFieldData,searchKey&"="&searchItem,"|")>
+       </cfif>
+     </cfloop>
+	
+	 <cfset doGenieAudit(userId=session.user.getUserId(),
+                             sessionId=session.thisUUID,
+                             reason=session.audit_code,
+                             reasonText=session.audit_details,
+                             requestFor=session.audit_for,
+                             fullName=session.user.getFullName(),
+                             action='Firearms Serial/Certif Enquiry',
+                             fields=auditFieldData,
+                             details='',
+                             numberOfResults=nominals.recordCount,
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                
+    
+     <cfreturn nominals>
+     
+    </cffunction> 
+    
     <cffunction name="getWestMerciaNominalDetail" access="remote" returntype="any" output="false" hint="Gets full details for a west mercia nominal">
 	 <cfargument name="nominalRef" type="string" required="true" hint="nominal ref of nominal get full details for">
-	 <cfargument name="photosRequired" type="string" required="false" default="N" hint="set to ALL, CUSTODY OR VISOR if the photos array should be populated, otherwise N"> 
+	 <cfargument name="photosRequired" type="string" required="false" default="N" hint="set to ALL, CUSTODY OR VISOR if the photos array should be populated, otherwise N">
+	 <cfargument name="warningsRequired" type="string" required="false" default="N" hint="set to Y to get warnings populated, otherwise N">  
     	
      <cfset var nominal=CreateObject('component','genieObj.nominal.nominal').init()>
-       
+     <cfset var iWarn="">
+	 <cfset var sWarnText="">
+	    
 	   <cfset nominal.setNOMINAL_REF(arguments.nominalRef)>
 	   <cfset nominal=variables.nominalDAO.readWestMerciaNominal(obj=nominal)>
 	   <cfset nominal.setLATEST_PHOTO(getWestMerciaNominalLatestPhoto(nominal.getNOMINAL_REF()))>
 	   <cfset nominal.setLATEST_ADDRESS(getWestMerciaNominalLatestAddress(nominal.getNOMINAL_REF()))>   
 	   <cfif arguments.photosRequired IS NOT "N">
        	<cfset nominal.setPHOTOS(getWestMerciaNominalPhotos(nominal.getNOMINAL_REF(),arguments.photosRequired))>
-	   </cfif>     
+	   </cfif>
+	   <cfif arguments.warningsRequired IS NOT "N">	   	   
+       	<cfset nominal.setWARNINGS(getWestMerciaNominalWarnings(nominal.getNOMINAL_REF()))>
+		<cfloop from="1" to="#ArrayLen(nominal.getWARNINGS())#" index="iWarn">			
+			<cfif iWarn GT 1>
+				<cfset sWarnText &= "<br>">				
+			</cfif>
+			<cfset sWarnText &= "<b>"&nominal.getWARNINGS()[iWarn].getWSC_DESC()&"</b>-"&nominal.getWARNINGS()[iWarn].getDATE_MARKED_TEXT()>
+		</cfloop>
+		<cfset nominal.setWARNINGS_TEXT(sWarnText)>
+	   </cfif>         
 	   
      <cfreturn nominal>
      
@@ -1932,6 +2609,16 @@
      
     </cffunction>      
 
+    <cffunction name="getWestMerciaNominalSTEP" access="remote" returntype="any" output="false" hint="returns a query of nominals step pacakges">
+	 <cfargument name="nominalRef" type="string" required="true" hint="nominal ref to section27 for">       
+    	
+     <cfset var step="">
+     <cfset step=variables.stepDAO.getNominalSTEP(nominalRef=arguments.nominalRef)>
+                                                                         	     
+     <cfreturn step>
+     
+    </cffunction>  
+
     <cffunction name="getWestMerciaNominalRMP" access="remote" returntype="any" output="false" hint="returns an array of nominals risk man plans">
 	 <cfargument name="nominalRef" type="string" required="true" hint="nominal ref to section27 for">       
     	
@@ -2319,6 +3006,7 @@
 		<cfset var iNomUpd=1>
 		<cfset var qDistinctNominals=''>
 		<cfset var qNomUpdates=''>
+		<cfset var nUpdateData="">
         	        
         <cfset userUpdates.hasUpdates=false>	
         
@@ -2394,11 +3082,17 @@
 				
 				<cfset iNomUpd=1>
 				<cfloop query="qNomUpdates">      
+					<cfset nUpdateData=variables.notificationsDAO.formatNominalUpdate(businessArea=BUSINESS_AREA,businessRef=BUS_REF,nominalRef=NOMINAL_REF)>
 					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd]=StructNew()>
 					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].timestamp=TIMESTAMP>
-					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].html=variables.notificationsDAO.formatNominalUpdate(businessArea=BUSINESS_AREA,businessRef=BUS_REF,nominalRef=NOMINAL_REF)>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].html=nUpdateData.sHtml>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].jQueryClass=nUpdateData.jQueryClass>					
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].additionalAttributes=nUpdateData.additionalAttributes>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].displayData=nUpdateData.displayData>
 					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].busRef=BUS_REF>
 					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].busArea=BUSINESS_AREA>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].displayBusArea=nUpdateData.displayBusArea>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].href=nUpdateData.href>
 					<cfset iNomUpd++>
 				</cfloop>
 		   	    
@@ -2419,7 +3113,7 @@
 		
         <cfset var nominalUpdates=StructNew()>        
         <cfset var qUpdates=''>                
-		<cfset var iNomUpd=1>
+		<cfset var iNomUpd=1>		
         	        
         <cfset nominalUpdates.hasUpdates=false>	
         
@@ -2442,12 +3136,12 @@
 		   	    <cfset nominalUpdates.updates=ArrayNew(1)>
 				
 				<cfset iNomUpd=1>
-				<cfloop query="qUpdates">      
+				<cfloop query="qUpdates">     					 
 					<cfset nominalUpdates.updates[iNomUpd]=StructNew()>
-					<cfset nominalUpdates.updates[iNomUpd].timestamp=TIMESTAMP>
-					<cfset nominalUpdates.updates[iNomUpd].html=variables.notificationsDAO.formatNominalUpdate(businessArea=BUSINESS_AREA,businessRef=BUS_REF,nominalRef=NOMINAL_REF)>
-					<cfset nominalUpdates.updates[iNomUpd].busRef=BUS_REF>
-					<cfset nominalUpdates.updates[iNomUpd].busArea=BUSINESS_AREA>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].timestamp=TIMESTAMP>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].html=variables.notificationsDAO.formatNominalUpdate(businessArea=BUSINESS_AREA,businessRef=BUS_REF,nominalRef=NOMINAL_REF)>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].busRef=BUS_REF>
+					<cfset userUpdates.nominals[iNom].nominal.updates[iNomUpd].busArea=BUSINESS_AREA>					
 					<cfset iNomUpd++>
 				</cfloop>
 		   	    			 
@@ -2650,223 +3344,6 @@
      
     </cffunction>      
 
-    <cffunction name="doCrimeBrowserSearch" access="remote" returntype="any" output="false" hint="does crime browser search, returns a struct of validity of request and the query of results">
-     <cfargument name="Form" required="true" type="struct" hint="Form data to run search on">	    	
-     
-     <cfset var result=structNew()>
-  	 <cfset var validationFnc=CreateObject("component","applications.cfc.validation")>
-  	 <cfset var auditFieldData="">
-	 <cfset var sntLpt="">
-	 <cfset var idxArea="">
-	 <cfset var sntDetails="">
-	 <cfset var pzDetails=""> 
-	 <cfset var pzBeats="">
-  	      
-     <cfset result.valid=true>
-     <cfset result.errors="">
-     
-     <cfif Len(Form.frmDateFrom) IS 0>
-       <cfset result.valid=false>
-       <cfset result.errors=ListAppend(result.errors,"You must enter a From Date","|")>	  
-     <cfelse>
-	    <!--- check the date is valid --->
-            <cfif validationFnc.checkDate(Form.frmDateFrom) IS "NO">
-				<cfset result.valid=false>
-			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Date","|")>			
-            </cfif>			
-     </cfif>
-     
-     <cfif Len(Form.frmDateFrom) IS 0>
-       <cfset result.valid=false>     
-       <cfset result.errors=ListAppend(result.errors,"You must enter a To Date","|")>	              
-     <cfelse>
-	    <!--- check the date is valid --->
-            <cfif validationFnc.checkDate(Form.frmDateTo) IS "NO">
-				<cfset result.valid=false>
-			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Date","|")>						            
-            </cfif>
-     </cfif>
-     
-     <cfif Len(Form.frmTimeFrom) IS 0>
-       <cfset result.valid=false>     
-       <cfset result.errors=ListAppend(result.errors,"You must enter a From Time","|")>	              
-     <cfelse>
-	    <!--- check the date is valid --->
-            <cfif validationFnc.checkTime(Form.frmTimeFrom) IS "NO">
-				<cfset result.valid=false>
-			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Time","|")>						            
-            </cfif>
-     </cfif>     
-
-     <cfif Len(Form.frmTimeTo) IS 0>
-       <cfset result.valid=false>     
-       <cfset result.errors=ListAppend(result.errors,"You must enter a To Time","|")>	              
-     <cfelse>
-	    <!--- check the date is valid --->
-            <cfif validationFnc.checkTime(Form.frmTimeTo) IS "NO">
-				<cfset result.valid=false>
-			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid To Time","|")>						            
-            </cfif>
-     </cfif>     
-     
-     <cfif Len(Form.frmOffenceGroupings) IS 0>     
-       <cfset result.valid=false>
-       <cfset result.errors=ListAppend(result.errors,"You must select at least one theme","|")>	              
-     </cfif>
-     
-     <cfif result.valid>
-        
-        <cfset Form.frmDateFrom=Form.frmDateFrom&" "&form.frmTimeFrom> 
-        <cfset Form.frmDateTo=Form.frmDateTo&" "&form.frmTimeTo>  
-
-		<!--- convert any PZ codes to Beat for looking up crimes --->
-		<cfloop list="#Form.frmArea#" index="idxArea" delimiters=",">
-			<cfset pzDetails=isPatrolZone(idxArea)>
-			<cfif pzDetails.isPZ>
-				<cfset pzBeats=ListAppend(pzBeats,pzDetails.beatCodes,",")>
-			</cfif>
-		</cfloop>  
-		
-		<!--- snts have been converted to LPTS --->
-		<cfif Len(pzBeats) GT 0>
-			<cfset Form.frmArea=pzBeats>
-		</cfif>	 
-
-		<!--- convert any SNT codes to LPTs for looking up crimes --->
-		<cfloop list="#Form.frmArea#" index="idxArea" delimiters=",">
-			<cfset sntDetails=isSnt(idxArea)>
-			<cfif sntDetails.isSnt>
-				<cfset sntLpt=ListAppend(sntLpt,sntDetails.lpaCodes,",")>
-			</cfif>
-		</cfloop>  
-		
-		<!--- snts have been converted to LPTS --->
-		<cfif Len(sntLpt) GT 0>
-			<cfset Form.frmArea=sntLpt>
-		</cfif>	       
-		 
-        <cfset result.query=variables.offenceDAO.doCrimeBrowserSearch( Form.frmDateFrom,
-                                                                       Form.frmDateTo,
-                                                                       Form.frmArea,
-                                                                       Form.frmOffenceGroupings,
-                                                                       Form.frmDateType,
-                                                                       Form.frmSortType)>
-         
-         <cfset auditFieldData="From: #Form.frmDateFrom#, To: #Form.frmDateTo#, Area: #Form.frmArea#, Groups: #Form.frmOffenceGroupings#, Date Type:#Form.frmDateType#">                                                              
-         
-         
-         <cfset doGenieAudit(userId=session.user.getUserId(),
-                             sessionId=session.thisUUID,
-                             reason=session.audit_code,
-                             reasonText=session.audit_details,
-                             requestFor=session.audit_for,
-                             fullName=session.user.getFullName(),
-                             action='Crime Browser Search',
-                             fields=auditFieldData,
-                             details='',
-                             numberOfResults=result.query.recordCount,
-                             department=session.user.getDepartment())>                                                                         
-                                                                  
-     </cfif>
-                                                                         	     
-     <cfreturn result>
-     
-    </cffunction>   
-
-   <cffunction name="doWarningMarkerSearch" access="remote" returntype="any" output="false" hint="does a search for nominals with given warning markers">
-     <cfargument name="frmWarnings" required="true" type="string" hint="csv list of warning codes to search on">
-	 <cfargument name="frmCurrentOnly" required="true" type="string" hint="Y / N is the warning marker current">
-	 <cfargument name="frmHowToUseMarker" required="true" type="string" hint="ALL / ANY does the nominal have to have ALL or ANY of the markers">
-	 <cfargument name="frmSortType" required="false" default="ALPHABETICAL" type="string" hint="Way to order the results">
-	 <cfargument name="frmDateFrom" required="false" default="" type="string" hint="date marked from">
-	 <cfargument name="frmDateTo" required="false" default="" type="string" hint="date marked to">
-	 <cfargument name="frmAgeFrom" required="false" default="" type="string" hint="age of nominal from">
-	 <cfargument name="frmAgeTo" required="false" default="" type="string" hint="age of nominal to">
-	 <cfargument name="frmSex" required="false" default="" type="string" hint="sex of nominal">
-	 <cfargument name="frmPostTown" required="false" default="" type="string" hint="current town of persons address">      	    	      	    	
-     
-     <cfset var result=structNew()>
-  	 <cfset var validationFnc=CreateObject("component","applications.cfc.validation")>
-  	 <cfset var auditFieldData="">
-	 <cfset var thisNominal="">
-	    	      
-     <cfset result.valid=true>
-     <cfset result.errors="">
-	 <cfset result.nominals=arrayNew(1)>
-     
-     <!---
-     <cfif Len(Form.frmDateFrom) IS 0>
-       <cfset result.valid=false>
-       <cfset result.errors=ListAppend(result.errors,"You must enter a From Date","|")>	  
-     <cfelse>
-	    <!--- check the date is valid --->
-            <cfif validationFnc.checkDate(Form.frmDateFrom) IS "NO">
-				<cfset result.valid=false>
-			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid From Date","|")>			
-            </cfif>			
-     </cfif>
-     
-     <cfif Len(Form.frmDateFrom) IS 0>
-       <cfset result.valid=false>     
-       <cfset result.errors=ListAppend(result.errors,"You must enter a To Date","|")>	              
-     <cfelse>
-	    <!--- check the date is valid --->
-            <cfif validationFnc.checkDate(Form.frmDateTo) IS "NO">
-				<cfset result.valid=false>
-			    <cfset result.errors=ListAppend(result.errors,"You must enter a valid To Date","|")>						            
-            </cfif>
-     </cfif>
-     --->
-     
-     <cfif Len(Form.frmWarnings) IS 0>     
-       <cfset result.valid=false>
-       <cfset result.errors=ListAppend(result.errors,"You must select some warnings to search on","|")>	              
-     </cfif>
-     
-     <cfif result.valid>
-                         
-         
-        <cfset result.query=variables.warningsDAO.doWarningMarkerSearch( frmWarnings,
-																		 frmCurrentOnly,
-																		 frmHowToUseMarker,
-		                                                                 frmDateFrom,
-                                                                         frmDateTo,
-                                                                         frmAgeFrom,
-																		 frmAgeTo,
-																		 frmSex,
-																		 frmPostTown,
-                                                                         frmSortType)>
-         
-       	<cfloop query="result.query">
-		   <cfset thisNominal=getWestMerciaNominalDetail(NOMINAL_REF)>
-		   <cfset thisNominal.setLATEST_PHOTO(getWestMerciaNominalLatestPhoto(NOMINAL_REF))>
-		   <cfset thisNominal.setLATEST_ADDRESS(getWestMerciaNominalLatestAddress(NOMINAL_REF))>		      
-		   <cfset thisNominal.setLATEST_GRIDREF(getWestMerciaNominalLatestGridRef(NOMINAL_REF))>
-		   <cfset thisNominal.setWARNINGS(getWestMerciaNominalWarnings(NOMINAL_REF))>   		      	   
-		   <cfset arrayAppend(result.nominals,thisNominal)>
-		</cfloop>  
-         
-         <cfset auditFieldData="Warnings: #frmWarnings#, Current: #frmCurrentOnly#, SearchType: #frmHowToUseMarker#, From: #frmDateFrom#, To: #frmDateTo#, Order:#frmSortType#">                                                              
-         
-         
-         <cfset doGenieAudit(userId=session.user.getUserId(),
-                             sessionId=session.thisUUID,
-                             reason=session.audit_code,
-                             reasonText=session.audit_details,
-                             requestFor=session.audit_for,
-                             fullName=session.user.getFullName(),
-                             action='Warning Marker Search',
-                             fields=auditFieldData,
-                             details='',
-                             numberOfResults=result.query.recordCount,
-                             department=session.user.getDepartment())>                                                                         
-                                                                  
-     </cfif>
-                                                                         	     
-     <cfreturn result>
-     
-    </cffunction> 
-
     <cffunction name="doHTCUSearch" access="remote" returntype="any" output="false" hint="does a telephone number search on HTCU data">
      <cfargument name="telNo" required="true" type="string" hint="tel no to search on">	    	
      
@@ -2875,7 +3352,8 @@
         <cfquery name="qResult" datasource="#variables.warehouseDSN#">
 		   SELECT * 
 		   FROM   browser_owner.HTCU_INTEL
-		   WHERE  PHONE_NO LIKE <cfqueryparam value="#arguments.TelNo#" cfsqltype="cf_sql_varchar">             
+		   WHERE  PHONE_NO LIKE <cfqueryparam value="#arguments.TelNo#" cfsqltype="cf_sql_varchar">
+		   ORDER BY EXAM_DATE DESC                
         </cfquery>
     
          <cfset doGenieAudit(userId=session.user.getUserId(),
@@ -3249,7 +3727,7 @@
 			</style>
 			</head>
 			<body>
-		     <div align="center" style="padding-top:5px;">WEST MERCIA POLICE - RESTRICTED</div>
+		     <div align="center" style="padding-top:5px;">WARKWICKSHIRE AND WEST MERCIA POLICE - RESTRICTED</div>
 		    </body>
 		    </html>
 		 </cfdocumentitem>		  
@@ -3274,7 +3752,7 @@
 			</style>
 			</head>
 			<body>
-		    <div align="center">WEST MERCIA POLICE - RESTRICTED<br>Printed By #attributes.printedBy# #DateFormat(now(),"DD/MM/YYYY")# #TimeFormat(now(),"HH:mm")#</div>
+		    <div align="center">WARKWICKSHIRE AND WEST MERCIA POLICE - RESTRICTED<br>Printed By #attributes.printedBy# #DateFormat(now(),"DD/MM/YYYY")# #TimeFormat(now(),"HH:mm")#</div>
 		    </body>
 		    </html>
 		</cfdocumentitem>   		 
@@ -3389,7 +3867,10 @@
                              fields=auditFieldData,
                              details='',
                              numberOfResults=ArrayLen(result.bails),
-                             department=session.user.getDepartment())>                                                                         
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                        
                                                                   
      </cfif>
                                                                          	     
@@ -3481,7 +3962,10 @@
                              fields=auditFieldData,
                              details='',
                              numberOfResults=ArrayLen(result.bails),
-                             department=session.user.getDepartment())>                                                                         
+                             department=session.user.getDepartment(),
+							 ethnicCode=session.ethnic_code,
+							 requestCollar=session.audit_for_collar,
+							 requestForce=session.audit_for_force)>                                                                          
                                                                   
      </cfif>
                                                                          	     
@@ -4096,6 +4580,15 @@
      <cfreturn qPZLookup>
      
     </cffunction> 
+    
+    <cffunction name="getAttachedDocuments" access="remote" returntype="any" output="false" hint="returns an array of attachment objects for a source system and source ref">
+     <cfargument name="source_system" type="string" required="true" hint="source_system to get attachments for">
+	 <cfargument name="source_ref" type="string" required="true" hint="source_ref to get attachments for"> 
+                                                                              	     
+     <cfreturn variables.attachmentsDAO.getAttachedDocuments(source_system = source_system,
+     	                                                     source_ref    = source_ref)>
+     
+    </cffunction>     
 
     <cffunction name="createIntelPackage" access="remote" returntype="any" output="false" hint="returns a pdf intel packages">
      <cfargument name="packageForm" type="struct" required="true" hint="form with corp package data on">
@@ -4115,19 +4608,14 @@
     	<cfargument type="string" name="fields" required="false" default='""' hint="sessionId to audit for">    	    	    	    	    	
     	<cfargument type="string" name="details" required="false" default='""' hint="sessionId to audit for">    	    	  
     	<cfargument type="string" name="numberOfResults" required="false" default="0" hint="sessionId to audit for">
-		<cfargument type="string" name="department" required="false" default="" hint="department the person works in">    	    	    	    	    	  	    	    	
-    	
-    	<cfset var auditFilename=variables.genieAuditPath&"\"&DateFormat(now(),"YYYY")&DateFormat(now(),"MM")&DateFormat(now(),"DD")&"_sessions.txt">
-    	<cfset var auditData="">
+		<cfargument type="string" name="department" required="false" default="" hint="department the person works in">
+		<cfargument type="string" name="ethnicCode" required="false" default="" hint="ethnic code of driver being checked">
+		<cfargument type="string" name="requestCollar" required="false" default="" hint="collar of person requesting">
+		<cfargument type="string" name="requestForce" required="false" default="" hint="for of person requesting">		    	    	    	    	    	  	    	    	
+    	    	
 	    <cfset var qInsertData="">
-	    <cfset var startQueryTime="">
-	    <cfset var endQueryTime="">
-	    <cfset var totalQueryTime="">
-	    <cfset var insertResult="">
 	    <cfset var computerHostname=ListGetAt(CreateObject("java", "java.net.InetAddress").getLocalHost(),1,"/")>
-    		
-	    <cftransaction>
-	      <cfset startQueryTime=GetTickCount()>
+	    
 	      <cfquery name="qInsertAudit" datasource="#variables.warehouseDSN#" result="insertResult">
 	       INSERT INTO browser_owner.AUDIT_DATA
 	       (
@@ -4143,7 +4631,10 @@
               DETAILS,
               NUMBER_OF_RESULTS,
               SERVER,
-              DEPARTMENT	     
+              DEPARTMENT,
+			  ETHNIC_CODE,
+			  REQUEST_FOR_COLLAR,
+			  REQUEST_FOR_FORCE	     
 	       )
 	       VALUES
 	       (
@@ -4159,23 +4650,12 @@
 	          <cfqueryparam value="#arguments.details#" cfsqltype="cf_sql_varchar">,
 	          <cfqueryparam value="#arguments.numberOfResults#" cfsqltype="cf_sql_numeric">,
 	          <cfqueryparam value="#computerHostname#" cfsqltype="cf_sql_varchar">,
-			  <cfqueryparam value="#Replace(arguments.department," & "," ","ALL")#" cfsqltype="cf_sql_varchar">	          
+			  <cfqueryparam value="#Replace(arguments.department," & "," ","ALL")#" cfsqltype="cf_sql_varchar">,
+			  <cfqueryparam value="#ethnicCode#" cfsqltype="cf_sql_varchar">,
+			  <cfqueryparam value="#requestCollar#" cfsqltype="cf_sql_varchar">,
+			  <cfqueryparam value="#requestForce#" cfsqltype="cf_sql_varchar">		          
 	       )
 	      </cfquery>
-	      <cfset endQueryTime=GetTickCount()>
-	      <cfset totalQueryTime=endQueryTime-startQueryTime>
-		  <!---
-	      <cfif totalQueryTime GTE 1000>
-			  <cfmail to="nick.blackham@westmercia.pnn.police.uk" subject="GENIE Audit Taking 1000ms + [NOT PROTECTIVELY MARKED]" from="genie@westmercia.pnn.police.uk" type="html">
-			   #now()#
-			   <br><br>
-			   Execution Time=#insertResult.ExecutionTime#<br>
-			   #insertResult.sql#
-			   <br><br>
-			  </cfmail>		
-	      </cfif>
-		  --->
-	    </cftransaction>
      
     </cffunction>     
        

@@ -102,4 +102,7 @@ htcuGroups|SM_GENIE HTCU
 nomMergeGroups|SMA_GENIE_NOMINAL_MERGE
 genieAdminGroups|SMA_GENIE_ADMINISTRATORS
 bailCondsGroups|SM_PNSB OPERATOR,SM_PNSB SUPERVISOR,SMA_GENIE_ADMINISTRATORS
-packagePDFGroups|SMA_GENIE_ADMINISTRATORS,J PS Intel IPU,SM_FIELD INTELLIGENCE OFFICER,J PS Intel PNSB,J PS Intel
+packagePDFGroups|SMA_GENIE_ADMINISTRATORS,J PS Intel IPU,SM_FIELD INTELLIGENCE OFFICER,J PS Intel PNSB,J PS Intel,SM_PS Intelligence Department
+CRIMESAttachmentsDir|\\svr20200\d$\assets\crimesAttachments\
+errorHtmlDirectory|\\svr20200\g$\genie_data\errors\
+errorHtmlPath|/genie_errors/

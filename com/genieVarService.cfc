@@ -21,6 +21,20 @@
 		
 		<cfreturn appVars>
 	
-	</cffunction>  
+	</cffunction>
+	
+	<cffunction name="getAppVar" access="public" returntype="any" hint="returns app vars value as it's native type (string, query, struct etc..)" returnformat="plain">
+	  <cfargument name="varName" required="true" type="string" hint="name of app var to get">
+		
+		<cfset var appVars=getAppVars()>
+		<cfset var thisAppVar="">
+		
+		<cfif structKeyExists(appVars,varName)>
+			<cfset thisAppVar=appVars[varName]>
+		</cfif>
+				
+		<cfreturn thisAppVar>
+	
+	</cffunction>    
 
 </cfcomponent>
