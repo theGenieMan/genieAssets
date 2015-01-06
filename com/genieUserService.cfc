@@ -13,7 +13,8 @@
         <cfset variables.warehousedsn=arguments.warehousedsn>  
 		<cfset variables.warehousedsn2=arguments.warehousedsn2>    
 		<cfset variables.defaultStylesheet=arguments.defaultStylesheet>    
-		<cfset variables.defaultFont=arguments.defaultFont>                                                                                                        
+		<cfset variables.defaultFont=arguments.defaultFont>    
+		<cfset variables.defaultFontSize=arguments.defaultFontSize>                                                                                                        
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
         <cfreturn this />    
     </cffunction>  
