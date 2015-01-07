@@ -39,7 +39,7 @@ Log_path|d:\logs\genie\
 DVLA_Log_path|d:\logs\dvla\
 BaseDir|\\svr20200\d$\opdocs\
 OpenURL|http://websvr.intranet.wmcpolice/index_email.cfm?page_address=
-OpenPastespath|\\svr20200\g$\genie_data\genie_pastes\
+OpenPastespath|\\svr20200\f$\genie_data\genie_pastes\
 OpenPastesURL|/genie_data/genie_pastes/
 str_Image_URL|/genie_photos/	
 str_Image_Path|\genie_photos\	
