@@ -274,7 +274,7 @@
 	  <cfargument name="status" type="string" required="true" hint="bug status">
     
       <cfset var returnXml='<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><BugResults xger.s="http://tempuri.org/"><resultCount>%resultCount%</resultCount><Bugs>%bugList%</Bugs></BugResults></soap:Body></soap:Envelope>'>
-	  <cfset var bugXml="<Bug><bugUrn>%bugUrn%</bugUrn><bugBy><![CDATA[%bugBy%]]></bugBy><bugDate>%bugDate%</bugDate><bugDetails><![CDATA[%bugDetails%]]></bugDetails><bugStatus>%bugStatus%</bugStatus></Bug>">
+	  <cfset var bugXml="<Bug><bugUrn>%bugUrn%</bugUrn><bugBy><![CDATA[%bugBy%]]></bugBy><bugByEmail><![CDATA[%bugByEmail%]]></bugByEmail><bugDate>%bugDate%</bugDate><bugDetails><![CDATA[%bugDetails%]]></bugDetails><bugStatus>%bugStatus%</bugStatus></Bug>">
 	  <cfset var qBugList = "">
 	  <cfset var bugXmlResults="">
 	  <cfset var thisBug="">	  	    
@@ -308,7 +308,8 @@
 	    <cfloop query="qBugList">		  		  	
 			<cfset thisBug=duplicate(bugXml)>
 			<cfset thisBug=ReplaceNoCase(thisBug,'%bugUrn%',BUG_URN)>
-			<cfset thisBug=ReplaceNoCase(thisBug,'%bugBy%',BUG_BY_NAME)>				
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugBy%',BUG_BY_NAME)>	
+			<cfset thisBug=ReplaceNoCase(thisBug,'%bugByEmail%',BUG_BY_EMAIL)>				
 			<cfset thisBug=ReplaceNoCase(thisBug,'%bugDate%',DateFormat(BUG_DATE,"DD/MM/YYYY")&" "&TimeFormat(BUG_DATE,"HH:mm:ss"))>				
 			<cfset thisBug=ReplaceNoCase(thisBug,'%bugDetails%','Screen:<b>'&SCREEN&"</b><br>Type:<b>"&BUG_TYPE&"</b><Br>Short Text:<b>"&Left(BUG_DESCRIPTION,120)&"</b>")>
 			<cfset thisBug=ReplaceNoCase(thisBug,'%bugStatus%',STATUS)>
