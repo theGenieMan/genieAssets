@@ -109,11 +109,15 @@
                 
         <!---  get all the audit reasons for the last 2 days (in case spanning midnight and pick the top row for the info --->
         <cfquery name='qLastAuditReason' datasource='#variables.warehouseDSN#'>
-			select request_timestamp, reason_text, request_for, reason, session_id, server
+		SELECT *
+  		FROM (	
+			select request_timestamp, reason_text, request_for, reason, session_id, server, request_for_collar, request_for_force, ethnic_code
 			from browser_owner.audit_data ad
 			where AD.USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">
 			and trunc(request_timestamp) > trunc(sysdate-1)
 			order by request_timestamp desc
+			)
+		WHERE rownum=1
         </cfquery>
         
 		<cfif qLastAuditReason.recordCount IS 0>
@@ -128,6 +132,9 @@
 			<cfset structLastAudit.request_for=qLastAuditReason.request_for>
 			<cfset structLastAudit.sessionId=qLastAuditReason.session_Id>
 			<cfset structLastAudit.server=qLastAuditReason.server>
+			<cfset structLastAudit.ethnic_code=qLastAuditReason.ethnic_code>
+			<cfset structLastAudit.audit_for_collar=qLastAuditReason.request_for_collar>
+			<cfset structLastAudit.audit_for_force=qLastAuditReason.request_for_force>
 			<cflog file="genie" type="information" text="Last Audit Reason For #arguments.userId#, Reason:#structLastAudit.reason#, Reason Text:#structLastAudit.reason_text#, Request For:#structLastAudit.reason#, Server=#structLastAudit.server# SessionId=#structLastAudit.sessionId#">
 		</cfif>
 
@@ -299,5 +306,66 @@
         </cfquery>
              
     </cffunction> 
-       
+	
+	<cffunction name="updateSession" access="remote" output="false" returntype="void">
+		<cfargument name="requestFor" type="string" required="true" hint="update of request for field">
+		<cfargument name="reasonCode" type="string" required="true" hint="update of request code field">
+		<cfargument name="reasonText" type="string" required="true" hint="update of reason text field">
+		<cfargument name="ethnicCode" type="string" required="false" default="" hint="update of ethnicity code">
+		<cfargument name="requestForCollar" type="string" required="false" default="" hint="update of collar of person requesting">
+		<cfargument name="requestForForce" type="string" required="false" default="" hint="update of Force of person requesting">
+	 	
+	 	<cflog file="genie" type="information" text="updateSession (Service) called #session.urlToken#" >
+		 
+		<cfsavecontent variable="sessionDetails">
+		<cfdump var="#session#" format="text" > 
+		</cfsavecontent>
+		
+		<cflog file="genie" type="information" text="updateSession (Service) #sessionDetails#" >
+		 
+		<cfif isDefined('session.lastDPAUpdate')>
+		<cflog file="genie" type="information" text="updateSession (Service) before = #session.lastDPAUpdate#,#session.audit_code#,#session.audit_for#,#session.audit_details#,#session.ethnic_code#,#session.audit_for_collar#,#session.audit_for_force#">
+		</cfif> 
+	 	
+	 	<cfset session.lastDPAUpdate=now()>		
+		<cfset session.audit_code=arguments.reasoncode>
+		<cfset session.audit_for=arguments.requestFor>
+		<cfset session.audit_details=arguments.reasonText>
+		<cfset session.ethnic_code=arguments.ethnicCode>
+		<cfset session.audit_for_collar=arguments.requestForCollar>
+		<cfset session.audit_for_force=arguments.requestForForce>
+			 
+		<cflog file="genie" type="information" text="updateSession (Service) after = #session.lastDPAUpdate#,#session.audit_code#,#session.audit_for#,#session.audit_details#,#session.ethnic_code#,#session.audit_for_collar#,#session.audit_for_force#">	
+		 
+	</cffunction>       
+
+    <cffunction name="getUserLogAccessLevel" access="public" returntype="string" output="false" hint="returns users log access level for intel logs based on user id">
+     <cfargument name="userId" type="string" required="true" hint="userId to get log access level for">
+                                                                              	     
+     <cfset var logAccessLevel = 99>
+     <cfset var qry_LogAccess="">
+	 
+	 <cftry>
+        
+		 <cfquery name="qry_LogAccess" datasource="#variables.WarehouseDSN#">
+		 SELECT ACCESS_LEVEL
+		 FROM  browser_owner.NOMINAL_DETAILS
+		 WHERE  USER_ID=<cfqueryparam value="#UCase(arguments.userId)#" cfsqltype="cf_sql_varchar">
+		 </cfquery>
+		  
+		 <cfif qry_LogAccess.RecordCount GT 0>
+		  <cfif Len(qry_LogAccess.Access_level) GT 0>
+		   <cfset logAccessLevel=qry_LogAccess.Access_Level>		  
+		  </cfif>		 
+		 </cfif>
+		 	
+		 <cfcatch type="database">
+		  <cfreturn logAccessLevel>
+		 </cfcatch>
+	 </cftry>
+	  
+	 <cfreturn logAccessLevel> 	
+     
+    </cffunction> 
+
 </cfcomponent>

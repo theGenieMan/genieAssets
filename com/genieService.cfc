@@ -4615,8 +4615,32 @@
     	    	
 	    <cfset var qInsertData="">
 	    <cfset var computerHostname=ListGetAt(CreateObject("java", "java.net.InetAddress").getLocalHost(),1,"/")>
+		
+		<!--- if the reason code / text / request for are blank then we may have been moved
+			  over servers so we need to grab the previous session to continue for the user --->
 	    
-	      <cfquery name="qInsertAudit" datasource="#variables.warehouseDSN#" result="insertResult">
+	    <cfif   Len(arguments.reason) IS 0 
+			AND Len(arguments.reasonText) IS 0
+			AND Len(arguments.requestFor) IS 0>
+					
+	    	<cfset lastSession = application.genieUserService.getLastAuditReason(userId=arguments.userId)>
+			<cfset arguments.reason=lastSession.reason>
+			<cfset arguments.reasonText=lastSession.reason_text>
+			<cfset arguments.requestFor=lastSession.request_for>
+			<cfset arguments.requestFor=lastSession.request_for>
+			<cfset arguments.ethnicCode=lastSession.ethnic_code>
+			<cfset arguments.requestCollar=lastSession.audit_for_collar>
+			<cfset arguments.requestForce=lastSession.audit_for_force>		
+			<cfset application.genieUserService.updateSession(requestFor=arguments.requestFor,
+                                                              reasonCode=arguments.reason,
+                                                              reasonText=arguments.reasonText,
+                                                              ethnicCode=arguments.ethnicCode,
+															  requestForCollar=arguments.requestCollar,
+															  requestForForce=arguments.requestForce)>
+		
+	    </cfif>
+	    
+	    <cfquery name="qInsertAudit" datasource="#variables.warehouseDSN#" result="insertResult">
 	       INSERT INTO browser_owner.AUDIT_DATA
 	       (
               SESSION_ID,
@@ -4651,11 +4675,11 @@
 	          <cfqueryparam value="#arguments.numberOfResults#" cfsqltype="cf_sql_numeric">,
 	          <cfqueryparam value="#computerHostname#" cfsqltype="cf_sql_varchar">,
 			  <cfqueryparam value="#Replace(arguments.department," & "," ","ALL")#" cfsqltype="cf_sql_varchar">,
-			  <cfqueryparam value="#ethnicCode#" cfsqltype="cf_sql_varchar">,
-			  <cfqueryparam value="#requestCollar#" cfsqltype="cf_sql_varchar">,
-			  <cfqueryparam value="#requestForce#" cfsqltype="cf_sql_varchar">		          
+			  <cfqueryparam value="#arguments.ethnicCode#" cfsqltype="cf_sql_varchar">,
+			  <cfqueryparam value="#arguments.requestCollar#" cfsqltype="cf_sql_varchar">,
+			  <cfqueryparam value="#arguments.requestForce#" cfsqltype="cf_sql_varchar">		          
 	       )
-	      </cfquery>
+	    </cfquery>
      
     </cffunction>     
        

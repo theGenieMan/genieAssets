@@ -37,7 +37,14 @@
 		<cfset var errorFilePagePath="">
 		<cfset var errorFileResponseHtml=variables.errorHtmlDirectory>
 		<cfset var errorFileResponsePath="">
-		<cfset var errorPath=DateFormat(now(),"YYYY")&"\"&DateFormat(now(),"MM")&"\">               
+		<cfset var errorPath=DateFormat(now(),"YYYY")&"\"&DateFormat(now(),"MM")&"\">   
+		<Cfset var sErrorData="">
+		
+		<cfsavecontent variable="sErrorData">
+			<cfdump var="#arguments.errorData#" format="text">
+		</cfsavecontent>
+		
+		<cflog file="genieErrorData" text="#sErrorData#" type="information">            
                 
 	    <!--- get the next exhibit id sequence no --->
 	    <cfquery name="seqError" datasource="#variables.warehouseDSN#">
