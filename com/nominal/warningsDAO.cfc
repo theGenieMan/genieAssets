@@ -435,9 +435,15 @@
 										 <cfif Len(arguments.sex) GT 0>
 										  AND ns.SEX=<Cfqueryparam value="#arguments.sex#" cfsqltype="cf_sql_varchar">
 										 </cfif>
+										 <cfif Len(arguments.dateFrom) GT 0 AND Len(arguments.dateTo) IS 0>
+										  AND ge.DATE_MARKED = TO_DATE(<cfqueryparam value="#arguments.dateFrom#" cfsqltype="cf_sql_varchar">,'DD/MM/YYYY')
+										 </cfif>
 										 <cfif Len(arguments.dateFrom) GT 0 AND Len(arguments.dateTo) GT 0>
 										  AND ge.DATE_MARKED BETWEEN TO_DATE(<cfqueryparam value="#arguments.dateFrom#" cfsqltype="cf_sql_varchar">,'DD/MM/YYYY')
 										                         AND TO_DATE(<cfqueryparam value="#arguments.dateTo#" cfsqltype="cf_sql_varchar">,'DD/MM/YYYY')	 
+										 </cfif>
+										 <cfif Len(arguments.ageFrom) GT 0 AND Len(arguments.ageTo) IS 0>
+										  AND trunc(months_between(sysdate,ns.DATE_OF_BIRTH)/12) = <cfqueryparam value="#arguments.ageFrom#" cfsqltype="cf_sql_numeric">	 
 										 </cfif>
 										 <cfif Len(arguments.ageFrom) GT 0 AND Len(arguments.ageTo) GT 0>
 										  AND trunc(months_between(sysdate,ns.DATE_OF_BIRTH)/12) BETWEEN <cfqueryparam value="#arguments.ageFrom#" cfsqltype="cf_sql_numeric">

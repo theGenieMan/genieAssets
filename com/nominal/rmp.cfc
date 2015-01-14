@@ -13,6 +13,8 @@
 	<cfproperty name="DATE_RECEIVED" type="string" default="">
 	<cfproperty name="COMPLETED" type="string" default="">
 	<cfproperty name="LPA" type="string" default="">
+	<cfproperty name="VICTIMS" type="string" default="">
+	<cfproperty name="OFFENDERS" type="string" default="">
 	
 	<cfscript>
 		//Initialize the CFC with the default properties values.
@@ -23,6 +25,8 @@
 		variables.DATE_RECEIVED = "";
 		variables.COMPLETED = "";
 		variables.LPA = "";
+		variables.VICTIMS = "";
+		variables.OFFENDERS = "";
 	</cfscript>
 
 	<cffunction name="init" output="false" returntype="rmp">
@@ -104,7 +108,22 @@
 		<cfset variables.LPA = arguments.val>
 	</cffunction>	
 	
+	<cffunction name="getVICTIMS" output="false" access="public" returntype="any">
+		<cfreturn variables.VICTIMS>
+	</cffunction>
 
+	<cffunction name="setVICTIMS" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.VICTIMS = arguments.val>
+	</cffunction>	
 
+	<cffunction name="getOFFENDERS" output="false" access="public" returntype="any">
+		<cfreturn variables.OFFENDERS>
+	</cffunction>
+
+	<cffunction name="setOFFENDERS" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.OFFENDERS = arguments.val>
+	</cffunction>	
 
 </cfcomponent>
