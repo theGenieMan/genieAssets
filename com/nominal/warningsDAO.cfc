@@ -49,18 +49,21 @@
      <cfset var qNomWarning="">
      <cfset var iNom="">
      <cfset var iWarning="">
+	 <cfset var warnStart="">
+	 <cfset var warnEnd="">
      
      <!--- create a list of nominal refs --->
      <cfloop query="arguments.qNoms">
        <cfset lisNominals=ListAppend(lisNominals,NOMINAL_REF,",")>
      </cfloop>
      
+     <cfset warnStart=getTickCount()>
      <!--- query for all warnings on nominals in list --->
      <cfquery name="qWarnings" datasource="#variables.warehouseDSN#">
 	 SELECT w.NOMINAL_REF, '<b>'||w.WSC_DESC||'</b>-'||TO_CHAR(w.DATE_MARKED,'DD/MM/YYYY') AS WARNING_TEXT, DATE_MARKED, END_DATE
 	 FROM browser_owner.GE_WARNINGS w
 	 WHERE NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)	 
-     AND   END_DATE IS NULL OR (TRUNC(END_DATE) >= TRUNC(SYSDATE))
+     AND   (END_DATE IS NULL OR (TRUNC(END_DATE) >= TRUNC(SYSDATE)))
      UNION
      SELECT ns.NOMINAL_REF, '<b>CURRENT MISSING PERSON</b>' AS WARNING_TEXT, TRUNC(SYSDATE) AS DATE_MARKED, TRUNC(SYSDATE) AS END_DATE     
      FROM browser_owner.nominal_search ns
@@ -68,7 +71,11 @@
      AND COMP_STATUS IN ('M','I')
 	 ORDER BY 3 DESC      
      </cfquery>
-     
+     <cfset warnEnd=getTickCount()>
+	 <cflog file="geniePersonWebService" type="information" text="Nom List = #lisNominals# ms" />
+     <cflog file="geniePersonWebService" type="information" text="Warning DAO Query = #warnENd-warnStart# ms" />
+	 
+	 <cfset warnStart=getTickCount()> 
      <!--- loop round all nominals and get their warnings. if they have none then set their position in the array
            to a blank. If they do have warnings then concatenate their array entry with <br> to give a full
            html warning list --->
@@ -100,6 +107,8 @@
            <cfset iNom=iNom+1>
            
      </cfloop>
+     <cfset warnEnd=getTickCount()>
+	  <cflog file="geniePersonWebService" type="information" text="Warning DAO Process List = #warnENd-warnStart# ms" />
           
      <cfreturn arrWarnings>
      

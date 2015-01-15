@@ -234,7 +234,10 @@
         <cfset var searchVariable="">
         <cfset var i=1>
         <cfset var value="">
+        <cfset var startSP="">
+		<cfset var endSP="">
 
+        <cfset startSP=getTickCount()>
 		 <CFSTOREDPROC
 		   procedure="#variables.personSearchProcedure#"
 		   datasource="#variables.WarehouseDSN2#" username="#variables.warehouseUID#" password="#variables.warehousePWD#">
@@ -254,7 +257,8 @@
                         
 		  <CFPROCRESULT NAME="qRead">
 		  </CFSTOREDPROC>
-                
+        <cfset endSP=getTickCount()>
+		<cflog file="geniePersonWebService" type="information" text="Nominal DAO Stored Proc = #endSP-startSP# ms" />        
 		<cfreturn qRead>
     </cffunction>    
     
