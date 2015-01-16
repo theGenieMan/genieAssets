@@ -53,10 +53,12 @@
      <cfset var warnPos=""> 
 	 <cfset var sNomWarnText="">
      
-     <!--- create a list of nominal refs --->
+     <!--- create a list of nominal refs 
      <cfloop query="arguments.qNoms">
        <cfset lisNominals=ListAppend(lisNominals,NOMINAL_REF,",")>
-     </cfloop>
+     </cfloop>--->
+     
+     <cfset lisNominals=ValueList(arguments.qNoms.NOMINAL_REF)>
      
      <cfset warnStart=getTickCount()>
      <!--- query for all warnings on nominals in list --->

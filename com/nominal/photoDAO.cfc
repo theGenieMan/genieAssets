@@ -57,160 +57,103 @@
       <cfargument name="qNoms" required="true" type="query" hint="query containing a list of nominals with NOMINAL_REF column">
       
       <cfset var photoStruct=StructNew()>
-      <cfset var arrPhotoUrls=ArrayNew(1)>
-      <cfset var arrPhotoDates=ArrayNew(1)>      
-      <cfset var lisNominals="">
-      <cfset var qPhoto="">
-      <cfset var qNomPhoto="">
-	  <cfset var qCustPhoto="">
-	  <cfset var qAddPhoto="">
-      <cfset var iNom="">
-	  <cfset var iPhoto="">
+       
+      <cfset var lisNominals=ValueList(arguments.qNoms.NOMINAL_REF)>
+      <cfset var qCustPhoto="">	  
+      <cfset var iNom="">	  
       <cfset var sYear="">
       <cfset var sStation="">
       <cfset var sSystem="">
-      <cfset var sFilename="">                  
+      <cfset var sFilename="">
+	  <cfset var thisNomRef="">
+	  <cfset var arrPos="">  
+	    
+	  <cfset var totStart="">
+	  <cfset var totEnd="">  
+	    
+	  <cfset var q1Start="">
+	  <cfset var q1End="">	    
+	    
+	  <cfset var structStart="">
+	  <cfset var structEnd="">                  
+           
+     <cfset totStart=getTickCount()>     
       
-      <!--- create a list of nominal refs --->
-      <cfloop query="arguments.qNoms">
-        <cfset lisNominals=ListAppend(lisNominals,NOMINAL_REF,",")>
-      </cfloop>
-      
-      <!--- query for all warnings on nominals in list 
-      <cfquery name="qPhoto" datasource="#variables.warehouseDSN#">
-	     SELECT df.AS_REF, NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) AS DATE_TAKEN,NOMINAL_REF
-	     FROM   common_owner.DEF_ARRESTS df
-	     WHERE  NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)	 
-	     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">
-	     AND    NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) = (   SELECT MAX(NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE))
-						                                         FROM   common_owner.DEF_ARRESTS df1
-															     WHERE  NOMINAL_REF=df.NOMINAL_REF
-															     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">)    
-      </cfquery>--->
-	
       <!--- query for all warnings on nominals in list --->
+	  <cfset q1Start=getTickCount()>
       <cfquery name="qCustPhoto" datasource="#variables.warehouseDSN#">
-	     SELECT df.AS_REF, NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) AS DATE_TAKEN,NOMINAL_REF, df.AS_NUM, df.PHOTO_AVAILABLE
-	     FROM   common_owner.DEF_ARRESTS df
-	     WHERE  NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)	 
-	     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">
-	     AND    NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) = (   SELECT MAX(NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE))
+	    SELECT df.AS_REF, NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) AS DATE_TAKEN,NOMINAL_REF, df.AS_NUM, df.PHOTO_AVAILABLE, to_blob('') AS PHOTO, 0 AS SEQ_NO, '' AS SYSTEM_ID
+	    FROM   common_owner.DEF_ARRESTS df
+	    WHERE  NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)	 
+	    AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">
+	    AND    NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) = (   SELECT MAX(NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE))
 						                                         FROM   common_owner.DEF_ARRESTS df1
 															     WHERE  NOMINAL_REF=df.NOMINAL_REF
 															     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">)    
-      </cfquery>
-
-      <!--- get all additional photos for the nominal --->
- 	  <cfquery name="qAddPhoto" datasource="#variables.WarehouseDSN#">
-		SELECT *
+        UNION ALL
+        SELECT '' AS AS_REF, PHOTO_DATE AS DATE_TAKEN, NOMINAL_REF, '' AS AS_NUM, 'Y' AS PHOTO_AVAILABLE, PHOTO, SEQ_NO, SYSTEM_ID
 		FROM   browser_owner.NOMINAL_PHOTOS np1
 		WHERE  NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)
 		AND    PHOTO_DATE = (   SELECT MAX(PHOTO_DATE)
 							    FROM   browser_owner.NOMINAL_PHOTOS np2
 							    WHERE  np2.NOMINAL_REF=np1.NOMINAL_REF
-	                         )	
-		order by nominal_ref
-	  </cfquery>	
+	                         )
+		order by 3,2 desc   
+      </cfquery>
+      <cfset q1End=getTickCount()>
+	  <cflog file="geniePersonWebService" type="information" text="photoDAO q = #q1End-q1Start# ms" />
 	  
-	  <cfset qPhoto=QueryNew('AS_NUM,AS_REF,NOMINAL_REF,DATE_TAKEN,PHOTO_AVAILABLE,PHOTO_URL,SYSTEM_ID','varchar,varchar,varchar,date,varchar,varchar,varchar')>
-      
-      <cfset iPhoto=1>
-      <cfif qCustPhoto.recordCount GT 0>
-	   <cfloop query="qCustPhoto">
-		<cfscript>
-	        sYear=ListGetAt(qCustPhoto.AS_REF,1,"/");
-			sStation=ListGetAt(qCustPhoto.AS_REF,2,"/");
-			sSystem=ListGetAt(qCustPhoto.AS_REF,3,"/");
-			sFilename=sYear&sStation&sSystem&"_"&ListGetAt(qCustPhoto.AS_REF,4,"/")&".jpg";
-            
-            QueryAddRow(qPhoto,1);
-            QuerySetCell(qPhoto,'AS_NUM',qCustPhoto.AS_NUM,iPhoto);
-            QuerySetCell(qPhoto,'AS_REF',qCustPhoto.AS_REF,iPhoto);
-            QuerySetCell(qPhoto,'NOMINAL_REF',qCustPhoto.NOMINAL_REF,iPhoto);
-            QuerySetCell(qPhoto,'DATE_TAKEN',qCustPhoto.DATE_TAKEN,iPhoto);
-            QuerySetCell(qPhoto,'PHOTO_AVAILABLE',qCustPhoto.PHOTO_AVAILABLE,iPhoto);                                                
-            QuerySetCell(qPhoto,'PHOTO_URL',variables.genieImageDir&sYear&"/"&sStation&"/"&sSystem&"/"&sFilename,iPhoto);                                                
-            QuerySetCell(qPhoto,'SYSTEM_ID','CUSTODY',iPhoto);   
-            
-            iPhoto++;                                                                                 
-		</cfscript> 
-		</cfloop>       
-      </cfif>
-      
-      <cfif qAddPhoto.recordCount GT 0>
-	   <cfif Len(qAddPhoto.PHOTO) GT 0>     	
-	   	<cftry>     
-         <cfscript>
-
-            addImage=ImageNew(qAddPhoto.PHOTO);
-			ImageWrite(addImage,"#variables.genieImagePath#additional\#qAddPhoto.NOMINAL_REF#_#qAddPhoto.SEQ_NO#_#qAddPhoto.SYSTEM_ID#.jpg","0.8");	
-			
-            QueryAddRow(qPhoto,1);
-            QuerySetCell(qPhoto,'AS_NUM','',iPhoto);
-            QuerySetCell(qPhoto,'AS_REF','',iPhoto);
-            QuerySetCell(qPhoto,'NOMINAL_REF',qAddPhoto.NOMINAL_REF,iPhoto);
-            QuerySetCell(qPhoto,'DATE_TAKEN',qAddPhoto.PHOTO_DATE,iPhoto);
-            QuerySetCell(qPhoto,'PHOTO_AVAILABLE','Y',iPhoto);                                                
-            QuerySetCell(qPhoto,'PHOTO_URL','#variables.genieImageDir#additional/#qAddPhoto.NOMINAL_REF#_#qAddPhoto.SEQ_NO#_#qAddPhoto.SYSTEM_ID#.jpg',iPhoto);                                                
-            QuerySetCell(qPhoto,'SYSTEM_ID',qAddPhoto.SYSTEM_ID,iPhoto);   			 
-
-           iPhoto++;
-         </cfscript>
-		 <cfcatch type="any">
-		   <cflog file="duffVisorImages" type="information" text="Duff Image nominalRef=#qAddPhoto.NOMINAL_REF# seqNo=#qAddPhoto.SEQ_NO# sysId=#qAddPhoto.SYSTEM_ID#"> 	 
-		 </cfcatch>
-		</cftry>     
-	   </cfif>
-      </cfif>    	  
-	
-      <!--- loop round all nominals and get their photos. if they have none then set their position in the array
-            to a blank. If they do have a photo then work out the url and add to the photoUrl array. Do the same
-            with the date taken and add to the photoDate array --->
-      <cfset iNom=1>      
-      <cfloop query="arguments.qNoms">
-          
-            <cfquery name="qNomPhoto" dbtype="query">
-	        SELECT * 
-	        FROM   qPhoto
-	        WHERE  NOMINAL_REF=<cfqueryparam value="#NOMINAL_REF#" cfsqltype="cf_sql_varchar">
-			ORDER BY DATE_TAKEN DESC
-            </cfquery>
-            
-            <cfif qNomPhoto.RecordCount IS 0>
-              <!--- nominal has no photo --->
-              <cfset arrPhotoUrls[iNom]="">
-              <cfset arrPhotoDates[iNom]="">  
-       
-            <cfelse>
-              <!--- nominal has photo, check AS NUM is properly formatted and create the link and date --->
-              
-              <cfif ListLen(qNomPhoto.AS_REF,"/") IS 4>		
-	             <cfset sYear=ListGetAt(qNomPhoto.AS_REF,1,"/")>
-			     <cfset sStation=ListGetAt(qNomPhoto.AS_REF,2,"/")>
-				 <cfset sSystem=ListGetAt(qNomPhoto.AS_REF,3,"/")>
-				 <cfset sFilename=sYear&sStation&sSystem&"_"&ListGetAt(qNomPhoto.AS_REF,4,"/")&".jpg">
-
-			     <cfset arrPhotoUrls[iNom]=variables.genieImageDir&sYear&"/"&sStation&"/"&sSystem&"/"&sFilename>
-                 <cfset arrPhotoDates[iNom]=DateFormat(qNomPhoto.DATE_TAKEN,"DD/MM/YYYY")>
-              <cfelse>
-			     <cfif Len(qNomPhoto.PHOTO_URL) GT 0>
-	                 <cfset arrPhotoUrls[iNom]=qNomPhoto.PHOTO_URL>
-	                 <cfset arrPhotoDates[iNom]=DateFormat(qNomPhoto.DATE_TAKEN,"DD/MM/YYYY")>           				     
-				 <cfelse>
-	                 <cfset arrPhotoUrls[iNom]="">
-	                 <cfset arrPhotoDates[iNom]="">           
-	             </cfif>
-              </cfif>
-			  			
-                            
-            </cfif>
-            
-            <cfset iNom=iNom+1>
-            
-      </cfloop>
-      
-      <cfset photoStruct.photoUrls=arrPhotoUrls>
-      <cfset photoStruct.photoDates=arrPhotoDates>      
+	  <cfset structStart=getTickCount()>
+	    
+ 		<cfset photoStruct.photoUrls=arrayNew(1)>
+	    <cfset photoStruct.photoDates=arrayNew(1)>
+	    
+	    <cfloop from="1" to="#ListLen(lisNominals,",")#" index="iNom">
+		  <cfset photoStruct.photoUrls[iNom]="">
+		  <cfset photoStruct.photoDates[iNom]="">	  
+	    </cfloop>    
+	  
+	    <cfset thisNomRef="">
+ 	    <cfloop query="qCustPhoto">
+	  	  <cfif thisNomRef IS NOT NOMINAL_REF>	 	 
+			 <cfset arrPos=ListFind(lisNominals,NOMINAL_REF,",")>
+			 <cfset photoStruct.photoDates[arrPos]=DateFormat(DATE_TAKEN,"DD/MM/YYYY")>
+			 <cfset thisNomRef=NOMINAL_REF>
+			 
+			 <!--- West Mercia Custody Photo --->			 
+			 <cfif Len(AS_REF) GT 0>			 	 
+			 	<cfset sYear=ListGetAt(AS_REF,1,"/")>
+				<cfset sStation=ListGetAt(AS_REF,2,"/")>
+			    <cfset sSystem=ListGetAt(AS_REF,3,"/")>
+			    <cfset sFilename=sYear&sStation&sSystem&"_"&ListGetAt(AS_REF,4,"/")&".jpg">				
+				<cfset photoStruct.photoUrls[arrPos]=variables.genieImageDir&sYear&"/"&sStation&"/"&sSystem&"/"&sFilename>			 	 
+			 <cfelse>			 	 
+			 <!--- Other Force or VISOR custody photo --->
+			 	<cfif Len(PHOTO) GT 0>								
+				<cftry>				     
+		         <cfscript>		
+		            addImage=ImageNew(PHOTO);
+		            imageFilename="#variables.genieImagePath#additional\#NOMINAL_REF#_#SEQ_NO#_#SYSTEM_ID#.jpg";
+		            if (!fileExists(imageFilename))
+						ImageWrite(addImage,imageFilaname,"0.8");	
+		         </cfscript>
+		         <cfset photoStruct.photoUrls[arrPos]="#variables.genieImageDir#additional/#NOMINAL_REF#_#SEQ_NO#_#SYSTEM_ID#.jpg">				
+				 <cfcatch type="any">
+				   <cflog file="duffVisorImages" type="information" text="Duff Image nominalRef=#NOMINAL_REF# seqNo=#SEQ_NO# sysId=#SYSTEM_ID#"> 	 
+				 </cfcatch>
+				</cftry>				 	
+			 </cfif>   
+			 	 
+			 </cfif>
+			 	 	 
+		 </cfif>
+	  </cfloop>	    
+	    
+      <cfset structEnd=getTickCount()>
+	  <cflog file="geniePersonWebService" type="information" text="Struct = #structEnd-structStart# ms" />
+	    
+      <cfset totEnd=getTickCount()>
+	  <cflog file="geniePersonWebService" type="information" text="Photo DAO Total = #totENd-totStart# ms" />  
       
       <cfreturn photoStruct>
       
@@ -600,5 +543,185 @@
 		<cfreturn returnList>
 		 
 	</cffunction>
+
+    <cffunction name="old_getNominalLatestPhotoForSearch" output="false" access="public" returntype="struct" hint="returns the latest photo record for a nominal and it's date. 2 arrays in a struct">
+      <cfargument name="qNoms" required="true" type="query" hint="query containing a list of nominals with NOMINAL_REF column">
+      
+      <cfset var photoStruct=StructNew()>
+      <cfset var arrPhotoUrls=ArrayNew(1)>
+      <cfset var arrPhotoDates=ArrayNew(1)>      
+      <cfset var lisNominals="">
+      <cfset var qPhoto="">
+      <cfset var qNomPhoto="">
+	  <cfset var qCustPhoto="">
+	  <cfset var qAddPhoto="">
+      <cfset var iNom="">
+	  <cfset var iPhoto="">
+      <cfset var sYear="">
+      <cfset var sStation="">
+      <cfset var sSystem="">
+      <cfset var sFilename="">
+	    
+	  <cfset var totStart="">
+	  <cfset var totEnd="">  
+	    
+	  <cfset var q1Start="">
+	  <cfset var q1End="">
+	    
+	  <cfset var q2Start="">
+	  <cfset var q2End="">
+	    
+	  <cfset var structStart="">
+	  <cfset var structEnd="">                  
+      
+     <!--- create a list of nominal refs 
+     <cfloop query="arguments.qNoms">
+       <cfset lisNominals=ListAppend(lisNominals,NOMINAL_REF,",")>
+     </cfloop>--->
+     
+     <cfset totStart=getTickCount()>
+     
+     <cfset lisNominals=ValueList(arguments.qNoms.NOMINAL_REF)>
+      
+      <!--- query for all warnings on nominals in list --->
+	  <cfset q1Start=getTickCount()>
+      <cfquery name="qCustPhoto" datasource="#variables.warehouseDSN#">
+	     SELECT df.AS_REF, NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) AS DATE_TAKEN,NOMINAL_REF, df.AS_NUM, df.PHOTO_AVAILABLE
+	     FROM   common_owner.DEF_ARRESTS df
+	     WHERE  NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)	 
+	     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">
+	     AND    NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) = (   SELECT MAX(NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE))
+						                                         FROM   common_owner.DEF_ARRESTS df1
+															     WHERE  NOMINAL_REF=df.NOMINAL_REF
+															     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">)    
+      </cfquery>
+      <cfset q1End=getTickCount()>
+	    
+	  <cflog file="geniePersonWebService" type="information" text="q1 = #q1End-q1Start# ms" />  
+
+      <cfset q2Start=getTickCount()>
+      <!--- get all additional photos for the nominal --->
+ 	  <cfquery name="qAddPhoto" datasource="#variables.WarehouseDSN#">
+		SELECT *
+		FROM   browser_owner.NOMINAL_PHOTOS np1
+		WHERE  NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)
+		AND    PHOTO_DATE = (   SELECT MAX(PHOTO_DATE)
+							    FROM   browser_owner.NOMINAL_PHOTOS np2
+							    WHERE  np2.NOMINAL_REF=np1.NOMINAL_REF
+	                         )	
+		order by nominal_ref
+	  </cfquery>	
+	  <cfset q2End=getTickCount()>	    
+	  <cflog file="geniePersonWebService" type="information" text="q2 = #q2End-q2Start# ms" />
+	  
+	  <cfset qPhoto=QueryNew('AS_NUM,AS_REF,NOMINAL_REF,DATE_TAKEN,PHOTO_AVAILABLE,PHOTO_URL,SYSTEM_ID','varchar,varchar,varchar,date,varchar,varchar,varchar')>
+      
+      <cfset structStart=getTickCount()>
+      <cfset iPhoto=1>
+      <cfif qCustPhoto.recordCount GT 0>
+	   <cfloop query="qCustPhoto">
+		<cfscript>
+	        sYear=ListGetAt(qCustPhoto.AS_REF,1,"/");
+			sStation=ListGetAt(qCustPhoto.AS_REF,2,"/");
+			sSystem=ListGetAt(qCustPhoto.AS_REF,3,"/");
+			sFilename=sYear&sStation&sSystem&"_"&ListGetAt(qCustPhoto.AS_REF,4,"/")&".jpg";
+            
+            QueryAddRow(qPhoto,1);
+            QuerySetCell(qPhoto,'AS_NUM',qCustPhoto.AS_NUM,iPhoto);
+            QuerySetCell(qPhoto,'AS_REF',qCustPhoto.AS_REF,iPhoto);
+            QuerySetCell(qPhoto,'NOMINAL_REF',qCustPhoto.NOMINAL_REF,iPhoto);
+            QuerySetCell(qPhoto,'DATE_TAKEN',qCustPhoto.DATE_TAKEN,iPhoto);
+            QuerySetCell(qPhoto,'PHOTO_AVAILABLE',qCustPhoto.PHOTO_AVAILABLE,iPhoto);                                                
+            QuerySetCell(qPhoto,'PHOTO_URL',variables.genieImageDir&sYear&"/"&sStation&"/"&sSystem&"/"&sFilename,iPhoto);                                                
+            QuerySetCell(qPhoto,'SYSTEM_ID','CUSTODY',iPhoto);   
+            
+            iPhoto++;                                                                                 
+		</cfscript> 
+		</cfloop>       
+      </cfif>
+      
+      <cfif qAddPhoto.recordCount GT 0>
+	   <cfif Len(qAddPhoto.PHOTO) GT 0>     	
+	   	<cftry>     
+         <cfscript>
+
+            addImage=ImageNew(qAddPhoto.PHOTO);
+			ImageWrite(addImage,"#variables.genieImagePath#additional\#qAddPhoto.NOMINAL_REF#_#qAddPhoto.SEQ_NO#_#qAddPhoto.SYSTEM_ID#.jpg","0.8");	
+			
+            QueryAddRow(qPhoto,1);
+            QuerySetCell(qPhoto,'AS_NUM','',iPhoto);
+            QuerySetCell(qPhoto,'AS_REF','',iPhoto);
+            QuerySetCell(qPhoto,'NOMINAL_REF',qAddPhoto.NOMINAL_REF,iPhoto);
+            QuerySetCell(qPhoto,'DATE_TAKEN',qAddPhoto.PHOTO_DATE,iPhoto);
+            QuerySetCell(qPhoto,'PHOTO_AVAILABLE','Y',iPhoto);                                                
+            QuerySetCell(qPhoto,'PHOTO_URL','#variables.genieImageDir#additional/#qAddPhoto.NOMINAL_REF#_#qAddPhoto.SEQ_NO#_#qAddPhoto.SYSTEM_ID#.jpg',iPhoto);                                                
+            QuerySetCell(qPhoto,'SYSTEM_ID',qAddPhoto.SYSTEM_ID,iPhoto);   			 
+
+           iPhoto++;
+         </cfscript>
+		 <cfcatch type="any">
+		   <cflog file="duffVisorImages" type="information" text="Duff Image nominalRef=#qAddPhoto.NOMINAL_REF# seqNo=#qAddPhoto.SEQ_NO# sysId=#qAddPhoto.SYSTEM_ID#"> 	 
+		 </cfcatch>
+		</cftry>     
+	   </cfif>
+      </cfif>    	  
+	
+      <!--- loop round all nominals and get their photos. if they have none then set their position in the array
+            to a blank. If they do have a photo then work out the url and add to the photoUrl array. Do the same
+            with the date taken and add to the photoDate array --->
+      <cfset iNom=1>      
+      <cfloop query="arguments.qNoms">
+          
+            <cfquery name="qNomPhoto" dbtype="query">
+	        SELECT * 
+	        FROM   qPhoto
+	        WHERE  NOMINAL_REF=<cfqueryparam value="#NOMINAL_REF#" cfsqltype="cf_sql_varchar">
+			ORDER BY DATE_TAKEN DESC
+            </cfquery>
+            
+            <cfif qNomPhoto.RecordCount IS 0>
+              <!--- nominal has no photo --->
+              <cfset arrPhotoUrls[iNom]="">
+              <cfset arrPhotoDates[iNom]="">  
+       
+            <cfelse>
+              <!--- nominal has photo, check AS NUM is properly formatted and create the link and date --->
+              
+              <cfif ListLen(qNomPhoto.AS_REF,"/") IS 4>		
+	             <cfset sYear=ListGetAt(qNomPhoto.AS_REF,1,"/")>
+			     <cfset sStation=ListGetAt(qNomPhoto.AS_REF,2,"/")>
+				 <cfset sSystem=ListGetAt(qNomPhoto.AS_REF,3,"/")>
+				 <cfset sFilename=sYear&sStation&sSystem&"_"&ListGetAt(qNomPhoto.AS_REF,4,"/")&".jpg">
+
+			     <cfset arrPhotoUrls[iNom]=variables.genieImageDir&sYear&"/"&sStation&"/"&sSystem&"/"&sFilename>
+                 <cfset arrPhotoDates[iNom]=DateFormat(qNomPhoto.DATE_TAKEN,"DD/MM/YYYY")>
+              <cfelse>
+			     <cfif Len(qNomPhoto.PHOTO_URL) GT 0>
+	                 <cfset arrPhotoUrls[iNom]=qNomPhoto.PHOTO_URL>
+	                 <cfset arrPhotoDates[iNom]=DateFormat(qNomPhoto.DATE_TAKEN,"DD/MM/YYYY")>           				     
+				 <cfelse>
+	                 <cfset arrPhotoUrls[iNom]="">
+	                 <cfset arrPhotoDates[iNom]="">           
+	             </cfif>
+              </cfif>
+			  			
+                            
+            </cfif>
+            
+            <cfset iNom=iNom+1>
+            
+      </cfloop>
+      
+      <cfset photoStruct.photoUrls=arrPhotoUrls>
+      <cfset photoStruct.photoDates=arrPhotoDates>      
+      <cfset structEnd=getTickCount()>
+	  <cflog file="geniePersonWebService" type="information" text="Struct = #structEnd-structStart# ms" />
+	    
+      <cfset totEnd=getTickCount()>
+	  <cflog file="geniePersonWebService" type="information" text="Photo DAO Total = #totENd-totStart# ms" />  
+      
+      <cfreturn photoStruct>
+      
+    </cffunction>
 
 </cfcomponent>
