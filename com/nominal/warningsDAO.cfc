@@ -46,11 +46,12 @@
      <cfset var arrWarnings=ArrayNew(1)>
      <cfset var lisNominals="">
      <cfset var qWarnings="">
-     <cfset var qNomWarning="">
-     <cfset var iNom="">
-     <cfset var iWarning="">
 	 <cfset var warnStart="">
 	 <cfset var warnEnd="">
+	 <cfset var iRef="">
+	 <cfset var thisNomRef="">
+     <cfset var warnPos=""> 
+	 <cfset var sNomWarnText="">
      
      <!--- create a list of nominal refs --->
      <cfloop query="arguments.qNoms">
@@ -78,7 +79,7 @@
 	 <cfset warnStart=getTickCount()> 
      <!--- loop round all nominals and get their warnings. if they have none then set their position in the array
            to a blank. If they do have warnings then concatenate their array entry with <br> to give a full
-           html warning list --->
+           html warning list 
      <cfset iNom=1>      
      <cfloop query="arguments.qNoms">
          
@@ -106,7 +107,27 @@
            
            <cfset iNom=iNom+1>
            
-     </cfloop>
+     </cfloop>--->
+     
+      <cfset iRef=1>
+	  <cfloop list="#lisNominals#" index="xxx" delimiters=",">
+	 	 <cfset arrWarnings[iRef]="">
+		 <cfset iRef++>
+	  </cfloop>
+	  <cfset thisNomRef="">
+	  <cfloop query="qWarnings">
+	     <cfif thisNomRef IS NOT NOMINAL_REF>	 	 
+			 <cfif thisNomRef IS NOT "">					 	  	 
+				 <cfset warnPos=ListFind(lisNominals,thisNomRef,",")>
+				 <cfset arrWarnings[warnPos]=sNomWarnText>
+			 </cfif>
+			 <cfset sNomWarnText=WARNING_TEXT>
+			 <cfset thisNomRef=NOMINAL_REF>
+		 <cfelse>
+		 	 <cfset sNomWarnText &= "<br>" & WARNING_TEXT> 	 
+		 </cfif>
+	  </cfloop>	
+     
      <cfset warnEnd=getTickCount()>
 	  <cflog file="geniePersonWebService" type="information" text="Warning DAO Process List = #warnENd-warnStart# ms" />
           
