@@ -72,7 +72,7 @@
      FROM browser_owner.nominal_search ns
      WHERE NOMINAL_REF IN (<cfqueryparam value="#lisNominals#" cfsqltype="cf_sql_varchar" list="true">)	 
      AND COMP_STATUS IN ('M','I')
-	 ORDER BY 3 DESC      
+	 ORDER BY 1,3 DESC      
      </cfquery>
      <cfset warnEnd=getTickCount()>
 	 <cflog file="geniePersonWebService" type="information" text="Nom List = #lisNominals# ms" />
@@ -117,18 +117,25 @@
 		 <cfset iRef++>
 	  </cfloop>
 	  <cfset thisNomRef="">
-	  <cfloop query="qWarnings">
+	  <cfset i=1>
+	  <cfloop query="qWarnings">	  	  	  	 
 	     <cfif thisNomRef IS NOT NOMINAL_REF>	 	 
 			 <cfif thisNomRef IS NOT "">					 	  	 
 				 <cfset warnPos=ListFind(lisNominals,thisNomRef,",")>
-				 <cfset arrWarnings[warnPos]=sNomWarnText>
+				 <cfset arrWarnings[warnPos]=sNomWarnText>				  
 			 </cfif>
 			 <cfset sNomWarnText=WARNING_TEXT>
-			 <cfset thisNomRef=NOMINAL_REF>
+			 <cfset thisNomRef=NOMINAL_REF>			  
 		 <cfelse>
-		 	 <cfset sNomWarnText &= "<br>" & WARNING_TEXT> 	 
+		 	 <cfset sNomWarnText &= "<br>" & WARNING_TEXT>			  	 
 		 </cfif>
+		<cfset i++>
 	  </cfloop>	
+	  
+	  <cfset warnPos=ListFind(lisNominals,thisNomRef,",")>
+	  <cfif warnPos GT 0>
+	  <cfset arrWarnings[warnPos]=sNomWarnText>
+	  </cfif>
      
      <cfset warnEnd=getTickCount()>
 	  <cflog file="geniePersonWebService" type="information" text="Warning DAO Process List = #warnENd-warnStart# ms" />
