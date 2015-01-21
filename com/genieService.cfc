@@ -1369,7 +1369,7 @@
 	 <cfset var offence="">
      <cfset var temp="">
      
-     <!--- call the West Midlandsperson search web service. A xml object is returned --->
+     <!--- call the West Mercia Telephone search object. --->
      <cfset searchResult=variables.telephoneDAO.doWestMerciaTelephoneSearch(searchTerms=arguments.searchTerms)>
      
      <cfloop query="searchResult">
@@ -4667,7 +4667,7 @@
 	          <cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">,
 	          <cfqueryparam value="#arguments.fullName#" cfsqltype="cf_sql_varchar">,
 	          <cfqueryparam value="#arguments.reason#" cfsqltype="cf_sql_varchar">,
-	          <cfqueryparam value="#arguments.reasonText#" cfsqltype="cf_sql_varchar">,
+	          <cfqueryparam value="#Left(arguments.reasonText,400)#" cfsqltype="cf_sql_varchar">,
 	          <cfqueryparam value="#arguments.requestFor#" cfsqltype="cf_sql_varchar">,
 	          <cfqueryparam value="#arguments.action#" cfsqltype="cf_sql_varchar">,
 	          <cfqueryparam value="#Replace(arguments.fields,chr(34),'','ALL')#" cfsqltype="cf_sql_varchar">,
