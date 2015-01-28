@@ -103,6 +103,7 @@ nominalTempDir|\\svr20031\d$\genie_data\nominalTemp\
 genieProxy|/genieObjAjaxProxy/genieProxy.cfc
 mergeAttachDir|\\svr20312\nominalMergeAttachments\
 redirectorUrl|/redirector/redirector.cfm?auditRequired=IFNOTSET&auditInfo=
+ttlLink|/redirector/redirector.cfm?type=ttl
 genieUserGroups|SM_crimes users,SM_GENIE_USERS,SM_UNIFORM,SM_SPECIAL,SM_COMMUNITY SUPPORT OFFICER,SM_PCSO,SM_PCSO Youth Engagement
 nameXGroups|SM_GENIE_NAMEX_UPDATER
 dvsGroups|SM_GENIE_DVS
@@ -112,7 +113,7 @@ nomMergeGroups|SMA_GENIE_NOMINAL_MERGE
 genieAdminGroups|SMA_GENIE_ADMINISTRATORS
 bailCondsGroups|SM_PNSB OPERATOR,SM_PNSB SUPERVISOR,SMA_GENIE_ADMINISTRATORS
 packagePDFGroups|SMA_GENIE_ADMINISTRATORS,J PS Intel IPU,SM_FIELD INTELLIGENCE OFFICER,J PS Intel PNSB,J PS Intel
-CRIMESAttachmentsDir|\\svr20284\d$\assets\crimesAttachments\
+CRIMESAttachmentsDir|/crimesAttachments/
 errorHtmlDirectory|\\svr20031\d$\genie_data\errors\
 errorHtmlPath|/genie_errors/
 dpaExceptions|DATA & RECORDS MANAGER,APPLICATION DATA ANALYST,ANALYST PROGRAMMER,SYSTEM DATA ANALYST,SYSTEMS DEVELOPMENT ANALYST,ASSURANCE OFFICER,VETTING & DISCLOSURE ASSISTANT,ADMINISTRATOR VETTING,VETTING SUPERVISOR,MANAGER - VETTING UNIT,VETTING RESEARCHER/ADMINISTRATOR,DBS VETTING OFFICER,VETTING CASE OFFICER
