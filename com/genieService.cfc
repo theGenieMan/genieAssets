@@ -1797,7 +1797,7 @@
      <cfset offs=variables.offenceDAO.doOffenceEnquiry(searchTerms=arguments.searchTerms)>
 	  
 	 <cfloop from="1" to="#ArrayLen(offs)#" index="iOff">   	   
-	   <cfset lisOffs=listAppend(lisOffs,offs[iOff].getCRIMENO()&"|"&offs[iOff].getCRIME_REF,",")>
+	   <cfset lisOffs=listAppend(lisOffs,offs[iOff].getCRIMENO()&"|"&offs[iOff].getCRIME_REF(),",")>
 	 </cfloop> 
                                                               
       <!--- format search data for logging --->
