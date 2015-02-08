@@ -6,6 +6,7 @@
 		<cfargument name="defaultStylesheet" required="false" default="jquery-ui-1.10.4.custom.css" type="String">
 		<cfargument name="defaultFont" required="false" default="Arial" type="String">
 	    <cfargument name="defaultFontSize" required="false" default="10" type="String">
+		<cfargument name="defaultDPATimeout" required="false" default="5" type="String">
         
         <cfset variables.version="1.1.0.0">    
 		<cfset variables.dateServiceStarted=DateFormat(now(),"DDD DD-MMM-YYYY")&" "&TimeFormat(now(),"HH:mm:ss")>                                  
@@ -14,7 +15,8 @@
 		<cfset variables.warehousedsn2=arguments.warehousedsn2>    
 		<cfset variables.defaultStylesheet=arguments.defaultStylesheet>    
 		<cfset variables.defaultFont=arguments.defaultFont>    
-		<cfset variables.defaultFontSize=arguments.defaultFontSize>                                                                                                        
+		<cfset variables.defaultFontSize=arguments.defaultFontSize>     
+		<cfset variables.defaultDPATimeout=arguments.defaultDPATimeout>                                                                                                        
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
         <cfreturn this />    
     </cffunction>  
@@ -158,8 +160,7 @@
         
         <!--- if no settings then create users settings and return --->
 		<cfif qSettings.recordCount IS 0>
-			<cfset structUserSettings.stylesheet=variables.defaultStylesheet>
-			<cfset structUserSettings.openNewWindow='N'>
+			<cfset structUserSettings.stylesheet=variables.defaultStylesheet>			
 			<cfset structUserSettings.font=variables.defaultFont>
 			<cfset structUserSettings.fontSize=variables.defaultFontSize>
 			<cfset structUserSettings.lastUpdate=now()>
@@ -168,16 +169,14 @@
 				(
 					USER_ID,
 					USER_NAME,
-					STYLE_SHEET,
-					OPEN_NEW_WINDOW,
+					STYLE_SHEET,					
 					FONT
 				)
 				VALUES
 				(
 					<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">,
 					<cfqueryparam value="#arguments.username#" cfsqltype="cf_sql_varchar">,
-					<cfqueryparam value="#structUserSettings.stylesheet#" cfsqltype="cf_sql_varchar">,
-					<cfqueryparam value="#structUserSettings.openNewWindow#" cfsqltype="cf_sql_varchar">,
+					<cfqueryparam value="#structUserSettings.stylesheet#" cfsqltype="cf_sql_varchar">,					
 					<cfqueryparam value="#structUserSettings.font#" cfsqltype="cf_sql_varchar">
 				)
 			</cfquery>	
@@ -185,6 +184,7 @@
 		<!--- has settings so read them into struct --->
          	<cfset structUserSettings.stylesheet=qSettings.STYLE_SHEET>
 			<cfset structUserSettings.openNewWindow=qSettings.OPEN_NEW_WINDOW>
+			<cfset structUserSettings.peType=qSettings.PERSON_SEARCH_TYPE>
 			<cfset structUserSettings.font=qSettings.FONT>
 			<cfset structUserSettings.fontSize=qSettings.FONT_SIZE>
 			<cfset structUserSettings.lastUpdate=qSettings.LAST_UPDATE>
@@ -197,9 +197,9 @@
     <cffunction name="updateUserSettings" access="remote" returntype="void" output="false" hint="updates the user settings">
         <cfargument name="userId" required="true" type="string" hint="userId to update settings for">
 		<cfargument name="userName" required="true" type="string" hint="userName to update settings for">               
-		<cfargument name="font" required="true" type="string" hint="userId to update settings for">
-		<cfargument name="stylesheet" required="true" type="string" hint="userName to update settings for">
-		<cfargument name="openNewWindow" required="true" type="string" hint="userId to update settings for">
+		<cfargument name="font" required="true" type="string" hint="font style to use">
+		<cfargument name="stylesheet" required="true" type="string" hint="stylesheet to use">
+		<cfargument name="peType" required="true" type="string" hint="person enquiry search type default">
 		<cfargument name="fontSize" required="true" type="string" hint="font size for settings update">		
 
         <cfset var qSettings=''>
@@ -208,7 +208,7 @@
 			UPDATE browser_owner.USER_SETTINGS
 			SET    USER_NAME = <cfqueryparam value="#arguments.username#" cfsqltype="cf_sql_varchar">,
 				   STYLE_SHEET = <cfqueryparam value="#arguments.stylesheet#" cfsqltype="cf_sql_varchar">,
-				   OPEN_NEW_WINDOW = <cfqueryparam value="#arguments.openNewWindow#" cfsqltype="cf_sql_varchar">,
+				   PERSON_SEARCH_TYPE = <cfqueryparam value="#arguments.peType#" cfsqltype="cf_sql_varchar">,
 				   FONT = <cfqueryparam value="#arguments.font#" cfsqltype="cf_sql_varchar">,
 				   FONT_SIZE = <cfqueryparam value="#arguments.fontSize#" cfsqltype="cf_sql_varchar">,
 				   LAST_UPDATE = SYSDATE
@@ -370,6 +370,41 @@
 	 </cftry>
 	 <cflog file="genieUserService" type="information" text="getUserLogAccess - #userId# - ran ok - returning #logAccessLevel#" /> 
 	 <cfreturn logAccessLevel> 	
+     
+    </cffunction> 
+
+    <cffunction name="getUserRoleSettings" access="public" returntype="struct" output="false" hint="returns a struct of the users DPA retention and timeout settings">
+     <cfargument name="role" type="string" required="true" hint="users organisational role">
+                                                                              	     
+     <cfset var roleSettings = structNew()>
+     <cfset var qRoleinfo="">
+
+     <cfset roleSettings.dpaClear=true>
+	 <cfset roleSettings.dpaTimeout=variables.defaultDPATimeout>
+	  
+	 <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role#" />
+     <cftry>        
+		 <cfquery name="qRoleInfo" datasource="#variables.WarehouseDSN#">
+		 SELECT CLEAR_DPA, DPA_TIMEOUT
+		 FROM   browser_owner.ROLE_SETTINGS
+		 WHERE  UPPER(ROLE)=<cfqueryparam value="#UCase(arguments.role)#" cfsqltype="cf_sql_varchar">
+		 </cfquery>
+		 		  
+		 <cfif qRoleInfo.RecordCount GT 0>		    	 
+		   <cfset roleSettings.dpaClear=iif(qRoleInfo.CLEAR_DPA IS "Y",de(true),de(false))>
+		   <cfset roleSettings.dpaTimeout=qRoleInfo.DPA_TIMEOUT>
+		   <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role# - record found - setting to clear dpa to #roleSettings.dpaClear#, timeout to #roleSettings.dpaTimeout#" />   		  
+		 <cfelse>
+ 	 	   <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role# - no record found - returning defaults" />  		 
+		 </cfif>
+		 	
+		 <cfcatch type="database">
+		  <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role# - error caught - returning defaults" />	 
+		  <cfreturn roleSettings>
+		 </cfcatch>
+	 </cftry>
+	 
+	 <cfreturn roleSettings> 	
      
     </cffunction> 
 
