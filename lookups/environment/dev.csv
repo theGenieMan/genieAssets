@@ -91,7 +91,7 @@ timespanCustodySec|0
 westMidsTempDir|\\SVR20200\s$\westMidsTempFiles\
 stopSearchMappingDir|\\svr20200\tempStopSearch\
 stopSearchMappingLink|http://development.intranet.wmcpolice/applications/stopSearch/index.cfm?filename=
-stepPNCWantedLink|http://development.intranet.wmcpolice/applications/packages_pilot/code/create_wanted_pnc.cfm?categoryid=31&nominalRef=<nominalRef>
+stepPNCWantedLink|http://development.intranet.wmcpolice/applications/packages_pilot/code/create_wanted_pnc.cfm?categoryid=31&nominalRef=
 intelFreeTextUrl|http://svr20423:9010/action=query&printfields=*&TotalResults=true&MaxResults=300&summary=quick&highlight=Terms&DatabaseMatch=Intel&Sort=~sort~&MinScore=~minScore~
 intelFreeTextTesters|n_bla003,p_pra002,23004364,23004478,23004598,23004649,23004671,23004808lc,23005078,23005522,23006180,23006222,c_met001,23000053
 intelFTSTempDir|\\svr20031\d$\genie_data\intelFTSTemp\

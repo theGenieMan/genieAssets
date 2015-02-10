@@ -138,14 +138,17 @@
 		<cfset var qCusts="">
         <cfset var custs=ArrayNew(1)>
         <cfset var cust="">
+		<cfset var cSuite="">
+		<cfset var iCust=1>
 		
-		<cfset custodySuite=Trim(ReplaceList(custodySuite,'ALLWP,ALLWMP,ALLCUST','23,22, '))>
+		<cfset custodySuite=Trim(ReplaceList(custodySuite,'ALLWP,ALLWMP,ALLCUST','23%,22%,%'))>
 
 		<cfquery name="qCusts" datasource="#variables.warehouseDSN#">
 		SELECT cs.CUSTODY_REF
 		FROM   browser_owner.CUSTODY_SEARCH cs, browser_owner.CUSTODY_DETAIL cd
 		WHERE  cd.custody_ref=cs.custody_ref
 		AND    cs.sensetive = 'N'
+		<!---
 		<cfif Len(custodySuite) GT 0>		
 			 <cfif Len(custodySuite) IS 2>
 			  	  AND   SUBSTR(STATION,0,2) = <cfqueryparam value="#custodySuite#" cfsqltype="cf_sql_varchar" />	 
@@ -159,9 +162,19 @@
 			      <cfqueryparam value="#custodySuite#" cfsqltype="cf_sql_varchar">
 			 </cfif> 
 	    </cfif> 
+	    --->
+	    AND (
+	    <cfloop list="#custodySuite#" index="cSuite" delimiters=",">
+		 <cfif iCust GT 1>
+		  OR
+		 </cfif>
+		 STATION LIKE <cfqueryparam value="#cSuite#" cfsqltype="cf_sql_varchar">
+		 <cfset iCust++>	
+		</cfloop>
+		)
 		AND    status IN ('C','I')
 		AND    departure_time is null
-		order by next_review_date 
+		order by arrest_time
 		</cfquery>
         
         <cfif qCusts.RecordCount GT 0>
