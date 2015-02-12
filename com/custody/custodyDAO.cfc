@@ -174,7 +174,7 @@
 		)
 		AND    status IN ('C','I')
 		AND    departure_time is null
-		order by arrest_time
+		order by custody_ref
 		</cfquery>
         
         <cfif qCusts.RecordCount GT 0>
