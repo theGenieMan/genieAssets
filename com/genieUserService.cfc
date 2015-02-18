@@ -158,12 +158,8 @@
 			WHERE  USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar" >
         </cfquery>
         
-        <!--- if no settings then create users settings and return --->
-		<cfif qSettings.recordCount IS 0>
-			<cfset structUserSettings.stylesheet=variables.defaultStylesheet>			
-			<cfset structUserSettings.font=variables.defaultFont>
-			<cfset structUserSettings.fontSize=variables.defaultFontSize>
-			<cfset structUserSettings.lastUpdate=now()>
+        <!--- if no settings then create users settings and rerun the query to get them --->
+		<cfif qSettings.recordCount IS 0>			
 			<cfquery name='qSettings' datasource='#variables.warehouseDSN#'>
 				INSERT INTO browser_owner.USER_SETTINGS
 				(
@@ -179,16 +175,24 @@
 					<cfqueryparam value="#structUserSettings.stylesheet#" cfsqltype="cf_sql_varchar">,					
 					<cfqueryparam value="#structUserSettings.font#" cfsqltype="cf_sql_varchar">
 				)
-			</cfquery>	
-		<cfelse>	
-		<!--- has settings so read them into struct --->
-         	<cfset structUserSettings.stylesheet=qSettings.STYLE_SHEET>
-			<cfset structUserSettings.openNewWindow=qSettings.OPEN_NEW_WINDOW>
-			<cfset structUserSettings.peType=qSettings.PERSON_SEARCH_TYPE>
-			<cfset structUserSettings.font=qSettings.FONT>
-			<cfset structUserSettings.fontSize=qSettings.FONT_SIZE>
-			<cfset structUserSettings.lastUpdate=qSettings.LAST_UPDATE>
+			</cfquery>
+			
+			<cfquery name='qSettings' datasource='#variables.warehouseDSN#'>
+			SELECT *
+			FROM   browser_owner.USER_SETTINGS
+			WHERE  USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar" >
+        	</cfquery>
+				
 		</cfif>
+			
+		<!--- has settings now either way so read them into struct --->
+        <cfset structUserSettings.stylesheet=qSettings.STYLE_SHEET>
+		<cfset structUserSettings.openNewWindow=qSettings.OPEN_NEW_WINDOW>
+		<cfset structUserSettings.peType=qSettings.PERSON_SEARCH_TYPE>
+		<cfset structUserSettings.font=qSettings.FONT>
+		<cfset structUserSettings.fontSize=qSettings.FONT_SIZE>
+		<cfset structUserSettings.collapse=qSettings.COLLAPSE_ON_SEARCH>
+		<cfset structUserSettings.lastUpdate=qSettings.LAST_UPDATE>	
 		
 		<cfreturn structUserSettings>
              
@@ -200,6 +204,7 @@
 		<cfargument name="font" required="true" type="string" hint="font style to use">
 		<cfargument name="stylesheet" required="true" type="string" hint="stylesheet to use">
 		<cfargument name="peType" required="true" type="string" hint="person enquiry search type default">
+		<cfargument name="collapse" required="true" type="string" hint="should sections collapse on search">
 		<cfargument name="fontSize" required="true" type="string" hint="font size for settings update">		
 
         <cfset var qSettings=''>
@@ -211,6 +216,7 @@
 				   PERSON_SEARCH_TYPE = <cfqueryparam value="#arguments.peType#" cfsqltype="cf_sql_varchar">,
 				   FONT = <cfqueryparam value="#arguments.font#" cfsqltype="cf_sql_varchar">,
 				   FONT_SIZE = <cfqueryparam value="#arguments.fontSize#" cfsqltype="cf_sql_varchar">,
+				   COLLAPSE_ON_SEARCH = <cfqueryparam value="#arguments.collapse#" cfsqltype="cf_sql_varchar">,
 				   LAST_UPDATE = SYSDATE
 			WHERE  USER_ID = <cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar"> 				
 		</cfquery>			
