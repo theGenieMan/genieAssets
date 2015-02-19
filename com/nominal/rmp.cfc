@@ -13,6 +13,7 @@
 	<cfproperty name="DATE_RECEIVED" type="string" default="">
 	<cfproperty name="COMPLETED" type="string" default="">
 	<cfproperty name="LPA" type="string" default="">
+	<cfproperty name="CATS_MAIN_FILE" type="string" default="">
 	<cfproperty name="VICTIMS" type="string" default="">
 	<cfproperty name="OFFENDERS" type="string" default="">
 	
@@ -25,6 +26,7 @@
 		variables.DATE_RECEIVED = "";
 		variables.COMPLETED = "";
 		variables.LPA = "";
+		variables.CATS_MAIN_FILE = "";
 		variables.VICTIMS = "";
 		variables.OFFENDERS = "";
 	</cfscript>
@@ -106,6 +108,15 @@
 	<cffunction name="setLPA" output="false" access="public" returntype="void">
 		<cfargument name="val" required="true">
 		<cfset variables.LPA = arguments.val>
+	</cffunction>	
+	
+	<cffunction name="getCATS_MAIN_FILE" output="false" access="public" returntype="any">
+		<cfreturn variables.CATS_MAIN_FILE>
+	</cffunction>
+
+	<cffunction name="setCATS_MAIN_FILE" output="false" access="public" returntype="void">
+		<cfargument name="val" required="true">
+		<cfset variables.CATS_MAIN_FILE = arguments.val>
 	</cffunction>	
 	
 	<cffunction name="getVICTIMS" output="false" access="public" returntype="any">

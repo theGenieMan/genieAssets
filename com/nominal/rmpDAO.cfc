@@ -5,21 +5,18 @@
         <cfargument name="warehouseDSN2" required="true" type="String">        
         <cfargument name="warehouseUID" required="true" type="String">
         <cfargument name="warehousePWD" required="true" type="String">       
-		<cfargument name="rmpDSN" required="false" type="String" default="RMP">        
         
         <cfset variables.warehousedsn=arguments.warehousedsn>
         <cfset variables.warehousedsn2=arguments.warehousedsn2>        
         <cfset variables.warehouseUID=arguments.warehouseUID>
         <cfset variables.warehousePWD=arguments.warehousePWD>     
-		<cfset variables.rmpDSN=arguments.rmpDSN>              
                    
         <cfreturn this />  
     </cffunction>   
 
 	<cffunction name="read" output="false" access="public" returntype="rmp">
 		<cfargument name="obj" required="true">
-		<cfset var qRead="">
-		<cfset var qCPID="">
+		<cfset var qRead="">		
 		<cfset var qNomsOnPlan="">		
 
 		<cfquery name="qRead" datasource="#variables.warehouseDSN#">
@@ -35,22 +32,22 @@
 			obj.setDATE_DUE(qRead.DATE_DUE);
 			obj.setDATE_RECEIVED(qRead.DATE_RECEIVED);
 			obj.setCOMPLETED(qRead.COMPLETED);
-			obj.setLPA(qRead.LPA);							
+			obj.setLPA(qRead.LPA);				
+			obj.setCATS_MAIN_FILE(qRead.CATS_MAIN_FILE);							
 		</cfscript>
 		
 		<!--- get VICTIMS and OFFENDERS for the RMP 
 		<cftry>--->
-		<cfquery name="qCPID" datasource="#variables.rmpDSN#">
-			SELECT CP_ID
-			FROM   CP_OWNER.CARE_PLAN
-			WHERE  CP_URN=<cfqueryparam value="#obj.getRMP_URN()#" cfsqltype="cf_sql_varchar" />
-		</cfquery>
 		
-		<cfquery name="qNomsOnPlan" datasource="#variables.rmpDSN#">
-			SELECT NAME||' ('||NOMINAL_REF||')' AS NOMINAL, ROLE_TYPE
-			FROM   CP_OWNER.CP_NOMINALS cpn
-			WHERE  cpn.CP_ID=<cfqueryparam value="#qCPID.CP_ID#" cfsqltype="cf_sql_varchar" />
-			AND    ROLE_TYPE IN ('Offender','Victim')
+		<cfquery name="qNomsOnPlan" datasource="#variables.warehouseDSN#">
+		   SELECT REPLACE(REPLACE(LTRIM(
+                  		        RTRIM(NS.SURNAME_1)||DECODE(NS.SURNAME_2,NULL,'','-'||NS.SURNAME_2)||', '||
+						        RTRIM(INITCAP(FORENAME_1))||' '||
+						        RTRIM(INITCAP(FORENAME_2))),' ,',','),'  ' ,' ')||' ('||ns.NOMINAL_REF||')' AS NOMINAL, ROLE_TYPE
+			FROM   BROWSER_OWNER.RISK_MAN_PLAN_NOMINALS rmpn, BROWSER_OWNER.NOMINAL_SEARCH ns
+			WHERE  rmpn.NOMINAL_REF=ns.NOMINAL_REF
+			AND    rmpn.RMP_URN=<cfqueryparam value="#obj.getRMP_URN()#" cfsqltype="cf_sql_varchar">
+			AND    rmpn.ROLE_TYPE IN ('Offender','Victim')
 		</cfquery>
 		
 		<cfloop query="qNomsOnPlan">
