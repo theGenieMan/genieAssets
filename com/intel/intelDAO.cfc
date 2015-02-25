@@ -287,7 +287,10 @@
 				       TO_CHAR(ADDN.RECORDED,'DD/MM/YYYY') DATE_REC,                                  
 				       TO_NUMBER(INTS.SECURITY_ACCESS_LEVEL) AS SECURITY_ACCESS_LEVEL,
 				       INTS.INDICATOR,
-				       INTS.SOURCE_DOC_REF
+				       INTS.SOURCE_DOC_REF,
+				       INTS.HAND_CODE,
+				       INTS.HAND_GUIDANCE,
+				       INTS.DIVISION
 				FROM   browser_owner.INTELL_SEARCH ints, browser_owner.INTELL_NOMS inom ,
 				       browser_owner.GE_ADD_NOMINALS addn, browser_owner.GE_ADDRESSES addr, 
 				       browser_owner.NOMINAL_SEARCH ns, browser_owner.NOMINAL_DETAILS nd
@@ -309,7 +312,10 @@
 				       '' AS DATE_REC,                                  
 				       TO_NUMBER(INTS.SECURITY_ACCESS_LEVEL) AS SECURITY_ACCESS_LEVEL,
 				       INTS.INDICATOR,
-				       INTS.SOURCE_DOC_REF
+				       INTS.SOURCE_DOC_REF,
+				       INTS.HAND_CODE,
+				       INTS.HAND_GUIDANCE,
+				       INTS.DIVISION
 				FROM   browser_owner.INTELL_SEARCH ints, BROWSER_OWNER.INTELL_ADDS iadd ,
 				       browser_owner.GE_ADDRESSES addr
 				WHERE  TRUNC(INTS.DATE_CREATED) BETWEEN TRUNC(TO_DATE('#arguments.dateFrom#','DD/MM/YYYY'))
