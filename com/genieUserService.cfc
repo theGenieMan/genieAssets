@@ -159,21 +159,17 @@
         </cfquery>
         
         <!--- if no settings then create users settings and rerun the query to get them --->
-		<cfif qSettings.recordCount IS 0>			
+		<cfif qSettings.recordCount IS 0>						
 			<cfquery name='qSettings' datasource='#variables.warehouseDSN#'>
 				INSERT INTO browser_owner.USER_SETTINGS
 				(
 					USER_ID,
-					USER_NAME,
-					STYLE_SHEET,					
-					FONT
+					USER_NAME
 				)
 				VALUES
 				(
 					<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">,
-					<cfqueryparam value="#arguments.username#" cfsqltype="cf_sql_varchar">,
-					<cfqueryparam value="#structUserSettings.stylesheet#" cfsqltype="cf_sql_varchar">,					
-					<cfqueryparam value="#structUserSettings.font#" cfsqltype="cf_sql_varchar">
+					<cfqueryparam value="#arguments.username#" cfsqltype="cf_sql_varchar">
 				)
 			</cfquery>
 			
