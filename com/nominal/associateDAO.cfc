@@ -53,13 +53,14 @@
 		    || DECODE(FAMILIAR_NAME,'','', ' (Nick ' || FAMILIAR_NAME || ')')
 				|| DECODE(MAIDEN_NAME,NULL,'',' (Nee ' || MAIDEN_NAME || ')') AS Full_Name,
 			   relt_notes, date_relt_created, surname_1, surname_2, forename_1, to_char(DATE_OF_BIRTH,'DD/MM/YYYY') AS DOB,
-			   nd.DECEASED, to_char(DATE_OF_DEATH,'DD/MM/YYYY') AS DATE_OF_DEATH, DOD_ESTIMATE_FLAG
+			   nd.DECEASED, to_char(DATE_OF_DEATH,'DD/MM/YYYY') AS DATE_OF_DEATH, DOD_ESTIMATE_FLAG,
+			   GREATEST(nvl(updated_date,nvl(date_relt_created,to_date('01/01/1900','DD/MM/YYYY'))), nvl(date_relt_created,to_date('01/01/1800','DD/MM/YYYY'))) as last_updated_date
 		from browser_owner.nominal_associates na, browser_owner.nominal_search ns, browser_owner.nominal_details nd
 		where na.NOMINAL_REF = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#arguments.nominalRef#" />
 		and na.nominal_ref_share = ns.nominal_ref
         and ns.nominal_ref=nd.nominal_ref
         <cfif arguments.orderBy is "date_created">
-		order by date_relt_created desc
+		order by GREATEST(nvl(updated_date,nvl(date_relt_created,to_date('01/01/1900','DD/MM/YYYY'))), nvl(date_relt_created,to_date('01/01/1800','DD/MM/YYYY'))) desc
         <cfelseif arguments.orderBy IS "surname">
         order by SURNAME_1,FORENAME_1
         <cfelseif arguments.orderBy IS "type">

@@ -48,7 +48,7 @@
 								     RTRIM(INITCAP(FORENAME_2))),' ,',','),'  ' ,' ')
 										    || DECODE(FAMILIAR_NAME,'','', ' (Nick ' || FAMILIAR_NAME || ')')
 											|| DECODE(MAIDEN_NAME,NULL,'',' (Nee ' || MAIDEN_NAME || ')') Name,
-			   ns.NOMINAL_REF,TO_CHAR(DATE_OF_BIRTH,'DD/MM/YYYY') AS DOB, REL_TYPE
+			   ns.NOMINAL_REF,TO_CHAR(DATE_OF_BIRTH,'DD/MM/YYYY') AS DOB, REL_TYPE, nd.NAME_TYPE
 		FROM   browser_owner.NOMINAL_SEARCH ns, browser_owner.NOMINAL_LINKS nl, browser_owner.NOMINAL_DETAILS nd
 		WHERE  ns.NOMINAL_REF=nl.NOMINAL_REF_2
 		and    ns.NOMINAL_REF=nd.NOMINAL_REF(+)
