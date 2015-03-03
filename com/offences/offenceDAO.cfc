@@ -176,6 +176,15 @@
 			<cfif sort IS "ROLE">
 			ORDER BY ROLE, o.FIRST_COMMITTED DESC
 			</cfif>
+			<cfif sort IS "DATE_COM_ASC">
+			ORDER BY o.FIRST_COMMITTED
+			</cfif>
+			<cfif sort IS "DATE_CREATED_ASC">
+			ORDER BY o.CREATED_DATE
+			</cfif>
+			<cfif sort IS "ROLE_ASC">
+			ORDER BY ROLE, o.FIRST_COMMITTED
+			</cfif>
 			</cfquery>
 	                
 	     <cfreturn qOffences>

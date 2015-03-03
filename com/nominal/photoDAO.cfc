@@ -139,7 +139,7 @@
 		         </cfscript>
 		         <cfset photoStruct.photoUrls[arrPos]="#variables.genieImageDir#additional/#NOMINAL_REF#_#SEQ_NO#_#SYSTEM_ID#.jpg">				
 				 <cfcatch type="any">
-				   <cflog file="duffVisorImages" type="information" text="Duff Image nominalRef=#NOMINAL_REF# seqNo=#SEQ_NO# sysId=#SYSTEM_ID#"> 	 
+				   <cflog file="duffVisorImages" type="information" text="Duff Image nominalRef=#NOMINAL_REF# seqNo=#SEQ_NO# sysId=#SYSTEM_ID#. #CFCatch.Detail# #CFCatch.Message#"> 	 
 				 </cfcatch>
 				</cftry>				 	
 			 </cfif>   

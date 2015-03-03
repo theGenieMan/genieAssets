@@ -645,7 +645,7 @@
 	  	 <cfset arguments.dsn="waredev">
 	  </cfif> 	    
 	  
-	  <cflog file="genie" type="information" text="genieProxy getMergeList env=#theEnv# dsn=#arguments.dsn#" >
+	  <cflog file="genie" type="information" text="genieProxy getMergeList env=#theEnv# dsn=#arguments.dsn# RequestBy=#arguments.requestBy#" >
 	    
 	  <cfquery name="qMergeList" datasource="#arguments.DSN#">
 		SELECT ml.*, nl.NOMINAL_REF, nl.NOMINAL_NAME, nl.NOMINAL_DOB, nl.NOMINAL_PNCID, nl.NOMINAL_CRO, nl.NOMINAL_NT

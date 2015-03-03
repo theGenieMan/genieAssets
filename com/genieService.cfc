@@ -4484,8 +4484,24 @@
      <cfargument name="area" type="string" required="true" hint="snt code to check">
 	 <cfargument name="dateFrom" type="string" required="true" hint="date from dd/mm/yyyy">
 	 <cfargument name="dateTo" type="string" required="true" hint="date to dd/mm/yyyy"> 
+
+      <cfset var returnData=variables.intelDAO.getSNTIntel(area=arguments.area, dateFrom=arguments.dateFrom, dateTo=arguments.dateTo)>
+      <cfset var auditData='Area: '&area&', Date From: '&dateFrom&', Date To:'&dateTo>
+	  <cfset doGenieAudit(userId=session.user.getUserId(),
+                         sessionId=session.thisUUID,
+                         reason=session.audit_code,
+                         reasonText=session.audit_details,
+                         requestFor=session.audit_for,
+                         fullName=session.user.getFullName(),
+                         action='Intel By Area',
+                         fields=auditData,
+                         details='',
+                         numberOfResults=returnData.recordCount,
+                         department=session.user.getDepartment(),						 
+						 requestCollar=session.audit_for_collar,
+						 requestForce=session.audit_for_force)>      
 	                                                                         	     
-     <cfreturn variables.intelDAO.getSNTIntel(area=arguments.area, dateFrom=arguments.dateFrom, dateTo=arguments.dateTo)>
+     <cfreturn returnData>
      
     </cffunction>   
     
