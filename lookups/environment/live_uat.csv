@@ -46,7 +46,7 @@ str_Image_Path|\genie_photos\
 str_Common_Dir|\genie\code\common\code\	
 str_Image_Temp_Dir|\\svr20200\s$\custody_photos\
 ErrorURL|/genie/code/error/
-str_Transforms|d:\inetpub\wwwroot\genie\code\transforms
+str_Transforms|\\svr20200\f$\inetpub\wwwroot\documentViewers\transforms
 NFLMS_Photos|\\svr20458\shogunphotos\
 NIR_Link|http://crimes.intranet.wmcpolice/forms/frmservlet?config=NIR_LIVE&otherparams=P_SUBJECT=~nominalRef~+P_COLLAR=~userCollar~+P_USERID=~userId~
 ANPR_Link|http://websvr.intranet.wmcpolice/index_email.cfm?page_address=/applications/anpr/code/search.cfm
