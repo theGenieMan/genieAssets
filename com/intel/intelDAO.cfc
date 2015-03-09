@@ -428,8 +428,6 @@
 		 <cfset var i=1>
 		 <cfset var sortUrl="">
 		 
-		 <cflog file="intelFTS" type="information" text="Intel FTS Search: #session.user.getFullName()# searchText=#arguments.searchText#,division=#arguments.division#,fromDate=#arguments.fromDate#,toDate=#arguments.toDate#,order=#arguments.order#,relevance=#arguments.relevance#,accessLevel=#accessLevel#">
-		 
 		 <cfif arguments.order IS "date">
 		 	 <cfset sortUrl="INTEL_DATE_CREATED_E:numberdecreasing">
 		 <cfelse>		 	 
@@ -466,8 +464,6 @@
 		  
 		 <cfhttp url="#returnStruct.url#" resolveurl="no" method="get" />
 		 
-		 <cflog file="intelFTS" type="information" text="Intel FTS Search: #session.user.getFullName()# #returnStruct.url#">
-		 
 		 <!--- query has run ok --->
 		 <cfif cfhttp.StatusCode IS "200 OK">
 		 	<cfset sXml=XMLParse(cfhttp.fileContent)>	 
@@ -491,18 +487,12 @@
 						      if the level of the log is less than the access of the user
 						      then they don't have access to it. So don't show the user 
 						      the log, but set the boolean so a message can be displayed --->
-						<!---  
-						<cflog file="intelFTS" type="information" text="log #thisLog.getLOG_REF()# SAL=#thisLog.getSECURITY_ACCESS_LEVEL()#, USER=#arguments.accessLevel#">
-						--->
+						
 						<cfif thisLog.getSECURITY_ACCESS_LEVEL() LT arguments.accessLevel>
-						    <cfset returnStruct.hasHigherAccessLogs=true>
-							<!--- <cflog file="intelFTS" type="information" text="log #thisLog.getLOG_REF()# user does not have access"> --->
+						    <cfset returnStruct.hasHigherAccessLogs=true>							
 						<cfelse>
 							<cfset ArrayAppend(arrayLogs,thisLog)>
-							<cfset ArrayAppend(arrayDRE,hitInfo[i].Content.Document.DRECONTENT.XmlText)>
-							<!---
-							<cflog file="intelFTS" type="information" text="log #thisLog.getLOG_REF()# added to array">
-							--->
+							<cfset ArrayAppend(arrayDRE,hitInfo[i].Content.Document.DRECONTENT.XmlText)>							
 							<cfset returnStruct.recordCount++>
 						</cfif>
 					</cfloop>
