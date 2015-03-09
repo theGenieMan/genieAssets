@@ -77,10 +77,7 @@
 	  <cfset var structStart="">
 	  <cfset var structEnd="">                  
            
-     <cfset totStart=getTickCount()>     
-      
-      <!--- query for all warnings on nominals in list --->
-	  <cfset q1Start=getTickCount()>
+      <!--- query for all warnings on nominals in list --->	 
       <cfquery name="qCustPhoto" datasource="#variables.warehouseDSN#">
 	    SELECT df.AS_REF, NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) AS DATE_TAKEN,NOMINAL_REF, df.AS_NUM, df.PHOTO_AVAILABLE, to_blob('') AS PHOTO, 0 AS SEQ_NO, '' AS SYSTEM_ID
 	    FROM   common_owner.DEF_ARRESTS df
@@ -100,10 +97,6 @@
 	                         )
 		order by 3,2 desc   
       </cfquery>
-      <cfset q1End=getTickCount()>
-	  <cflog file="geniePersonWebService" type="information" text="photoDAO q = #q1End-q1Start# ms" />
-	  
-	  <cfset structStart=getTickCount()>
 	    
  		<cfset photoStruct.photoUrls=arrayNew(1)>
 	    <cfset photoStruct.photoDates=arrayNew(1)>
@@ -148,13 +141,7 @@
 			 	 	 
 		 </cfif>
 	  </cfloop>	    
-	    
-      <cfset structEnd=getTickCount()>
-	  <cflog file="geniePersonWebService" type="information" text="Struct = #structEnd-structStart# ms" />
-	    
-      <cfset totEnd=getTickCount()>
-	  <cflog file="geniePersonWebService" type="information" text="Photo DAO Total = #totENd-totStart# ms" />  
-      
+	          
       <cfreturn photoStruct>
       
     </cffunction>
@@ -583,8 +570,7 @@
      
      <cfset lisNominals=ValueList(arguments.qNoms.NOMINAL_REF)>
       
-      <!--- query for all warnings on nominals in list --->
-	  <cfset q1Start=getTickCount()>
+      <!--- query for all warnings on nominals in list --->	  
       <cfquery name="qCustPhoto" datasource="#variables.warehouseDSN#">
 	     SELECT df.AS_REF, NVL(DATE_PHOTO_AND_FPRINTS,CREATION_DATE) AS DATE_TAKEN,NOMINAL_REF, df.AS_NUM, df.PHOTO_AVAILABLE
 	     FROM   common_owner.DEF_ARRESTS df
@@ -595,12 +581,8 @@
 															     WHERE  NOMINAL_REF=df.NOMINAL_REF
 															     AND    PHOTO_AVAILABLE=<cfqueryparam value="Y" cfsqltype="cf_sql_varchar">)    
       </cfquery>
-      <cfset q1End=getTickCount()>
-	    
-	  <cflog file="geniePersonWebService" type="information" text="q1 = #q1End-q1Start# ms" />  
-
-      <cfset q2Start=getTickCount()>
-      <!--- get all additional photos for the nominal --->
+      
+       <!--- get all additional photos for the nominal --->
  	  <cfquery name="qAddPhoto" datasource="#variables.WarehouseDSN#">
 		SELECT *
 		FROM   browser_owner.NOMINAL_PHOTOS np1
@@ -611,12 +593,10 @@
 	                         )	
 		order by nominal_ref
 	  </cfquery>	
-	  <cfset q2End=getTickCount()>	    
-	  <cflog file="geniePersonWebService" type="information" text="q2 = #q2End-q2Start# ms" />
+	  
 	  
 	  <cfset qPhoto=QueryNew('AS_NUM,AS_REF,NOMINAL_REF,DATE_TAKEN,PHOTO_AVAILABLE,PHOTO_URL,SYSTEM_ID','varchar,varchar,varchar,date,varchar,varchar,varchar')>
-      
-      <cfset structStart=getTickCount()>
+            
       <cfset iPhoto=1>
       <cfif qCustPhoto.recordCount GT 0>
 	   <cfloop query="qCustPhoto">
@@ -714,11 +694,6 @@
       
       <cfset photoStruct.photoUrls=arrPhotoUrls>
       <cfset photoStruct.photoDates=arrPhotoDates>      
-      <cfset structEnd=getTickCount()>
-	  <cflog file="geniePersonWebService" type="information" text="Struct = #structEnd-structStart# ms" />
-	    
-      <cfset totEnd=getTickCount()>
-	  <cflog file="geniePersonWebService" type="information" text="Photo DAO Total = #totENd-totStart# ms" />  
       
       <cfreturn photoStruct>
       
