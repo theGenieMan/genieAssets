@@ -117,9 +117,7 @@
 		 )
 		 WHERE ROWNUM < 202
 		</cfquery> 
-       
-       <cflog file="telephoneDAO" type="information" text="#Len(searchTerms.DATE_TO1)# #Len(searchTerms.DATE_TO2)#   ---- #theSql.SQL#">
-                
+                       
        <cfreturn qSearchResults>      
      
     </cffunction>        
