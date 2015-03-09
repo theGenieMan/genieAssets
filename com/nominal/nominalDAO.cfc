@@ -258,7 +258,7 @@
 		  <CFPROCRESULT NAME="qRead">
 		  </CFSTOREDPROC>
         <cfset endSP=getTickCount()>
-		<cflog file="geniePersonWebService" type="information" text="Nominal DAO Stored Proc = #endSP-startSP# ms" />        
+		        
 		<cfreturn qRead>
     </cffunction>    
     
