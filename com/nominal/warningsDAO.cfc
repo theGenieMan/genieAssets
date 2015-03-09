@@ -74,11 +74,7 @@
      AND COMP_STATUS IN ('M','I')
 	 ORDER BY 1,3 DESC      
      </cfquery>
-     <cfset warnEnd=getTickCount()>
-	 <cflog file="geniePersonWebService" type="information" text="Nom List = #lisNominals# ms" />
-     <cflog file="geniePersonWebService" type="information" text="Warning DAO Query = #warnENd-warnStart# ms" />
-	 
-	 <cfset warnStart=getTickCount()> 
+      
      <!--- loop round all nominals and get their warnings. if they have none then set their position in the array
            to a blank. If they do have warnings then concatenate their array entry with <br> to give a full
            html warning list 
@@ -136,9 +132,6 @@
 	  <cfif warnPos GT 0>
 	  <cfset arrWarnings[warnPos]=sNomWarnText>
 	  </cfif>
-     
-     <cfset warnEnd=getTickCount()>
-	  <cflog file="geniePersonWebService" type="information" text="Warning DAO Process List = #warnENd-warnStart# ms" />
           
      <cfreturn arrWarnings>
      
