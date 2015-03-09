@@ -40,6 +40,7 @@
 		<cfset var iIntel=1>
 		<cfset var iWarn=1>
 		<cfset var iAlias=1>
+		<cfset var lisCrimesOutput="">
 		
 		<cfif StructKeyExists(arguments.packageForm,'chkIncludeCrimes')>
 			<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
@@ -282,14 +283,17 @@
 					</cfif>			
 				
 				    <cfdocumentitem type="pagebreak" />
-					<!--- do the crime reports --->
-				
+					
+					<cfset lisCrimesOutput="">
 					<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
-					  <cfif iCrime GT 1>
-					  	  <cfdocumentitem type="pagebreak" />
+					  <cfif listFind(lisCrimesOutput,crimeNo,",") IS 0>	
+						  <cfif iCrime GT 1>
+						  	  <cfdocumentitem type="pagebreak" />
+						  </cfif>
+						  #REReplaceNoCase(createCrimeSummaryHTML(crimeNo),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL')#
+						  <cfset iCrime++>
+						  <cfset lisCrimesOutput=listAppend(lisCrimesOutput,crimeNo,",")>  
 					  </cfif>
-					  #REReplaceNoCase(createCrimeSummaryHTML(crimeNo),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL')#
-					  <cfset iCrime++>
 					</cfloop>
 				</cfif>
 				
@@ -301,7 +305,7 @@
 					<h2>INTELLIGENCE LOGS</h2>
 					<ol type="1">
 					<cfloop list="#arguments.packageForm.chkIncludeIntel#" index="intelLogRef" delimiters=",">
-						<li>#intelLogRef#</li>
+						<li>#ListGetAt(intelLogRef,1,"|")#</li>
 					</cfloop>	
 					</ol>	
 					
@@ -320,7 +324,7 @@
 					  <cfif iIntel GT 1>
 					  	  <cfdocumentitem type="pagebreak" />
 					  </cfif>
-					  #REReplaceNoCase(createIntelHTML(intelLogRef),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL')#
+					  #REReplaceNoCase(createIntelHTML(ListGetAt(intelLogRef,1,"|")),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL')#
 					  <cfset iIntel++>					  
 					</cfloop>
 				</cfif>				
