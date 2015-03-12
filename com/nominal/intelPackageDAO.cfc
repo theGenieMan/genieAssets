@@ -44,7 +44,9 @@
 		
 		<cfif StructKeyExists(arguments.packageForm,'chkIncludeCrimes')>
 			<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
+			  <cfif not structKeyExists(sReturn,'#Replace(crimeNo,"/","","ALL")#')>
 				<cfset StructInsert(sReturn,'#Replace(crimeNo,"/","","ALL")#',REReplaceNoCase(createCrimeSummaryHTML(crimeNo),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL'))>
+			  </cfif>
 			</cfloop>
 		</cfif>
 		
@@ -269,8 +271,12 @@
 					<!--- output the crime reports page --->
 					<h2>CRIME REPORTS</h2>
 					<ol type="1">
+					<cfset lisCrimesOutput="">	
 					<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
+						<cfif listFind(lisCrimesOutput,crimeNo,",") IS 0>
 						<li>#crimeNo#</li>
+						 <cfset lisCrimesOutput=listAppend(lisCrimesOutput,crimeNo,",")>
+						</cfif>
 					</cfloop>	
 					</ol>
 					
