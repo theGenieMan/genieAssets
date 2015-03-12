@@ -39,12 +39,6 @@
 		<cfset var errorFileResponsePath="">
 		<cfset var errorPath=DateFormat(now(),"YYYY")&"\"&DateFormat(now(),"MM")&"\">   
 		<Cfset var sErrorData="">
-		
-		<cfsavecontent variable="sErrorData">
-			<cfdump var="#arguments.errorData#" format="text">
-		</cfsavecontent>
-		
-		<cflog file="genieErrorData" text="#sErrorData#" type="information">            
                 
 	    <!--- get the next exhibit id sequence no --->
 	    <cfquery name="seqError" datasource="#variables.warehouseDSN#">
@@ -111,7 +105,11 @@
 			 <cfqueryparam value="#errorData.pageHtml#" cfsqltype="cf_sql_clob">,
 			 <cfqueryparam value="#errorData.httpStatus#" cfsqltype="cf_sql_varchar">,
 			 <cfqueryparam value="#errorData.statusText#" cfsqltype="cf_sql_varchar">,
+			 <cfif structKeyExists(errorData,'responseText')>
 			 <cfqueryparam value="#errorData.responseText#" cfsqltype="cf_sql_clob">,
+			 <cfelse>
+			 <cfqueryparam value="N/A" cfsqltype="cf_sql_clob">,	 
+			 </cfif>
 			 <cfqueryparam value="#errorData.pageTitle#" cfsqltype="cf_sql_varchar">,
 			 <cfqueryparam value="#errorData.url#" cfsqltype="cf_sql_varchar">,
 			 <cfqueryparam value="#errorData.eventErrorType#" cfsqltype="cf_sql_varchar">,

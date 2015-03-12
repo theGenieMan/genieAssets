@@ -346,9 +346,7 @@
                                                                               	     
      <cfset var logAccessLevel = 99>
      <cfset var qry_LogAccess="">
-	  
-	 <cflog file="genieUserService" type="information" text="getUserLogAccess - #userId#" />
-	 
+	  	 
 	 <cftry>
         
 		 <cfquery name="qry_LogAccess" datasource="#variables.WarehouseDSN#">
@@ -356,12 +354,10 @@
 		 FROM  browser_owner.NOMINAL_DETAILS
 		 WHERE  USER_ID=<cfqueryparam value="#UCase(arguments.userId)#" cfsqltype="cf_sql_varchar">
 		 </cfquery>
-		 
-		 <cflog file="genieUserService" type="information" text="getUserLogAccess - #userId# - record found - returning #qry_LogAccess.RecordCount#" /> 
+		 		 
 		 <cfif qry_LogAccess.RecordCount GT 0>
 		  <cfif Len(qry_LogAccess.Access_level) GT 0>		  	  
-		   <cfset logAccessLevel=qry_LogAccess.Access_Level>
-		   <cflog file="genieUserService" type="information" text="getUserLogAccess - #userId# - record found - setting to #logAccessLevel#" />   		  
+		   <cfset logAccessLevel=qry_LogAccess.Access_Level>		      		  
 		  </cfif>		 
 		 </cfif>
 		 	
@@ -370,7 +366,7 @@
 		  <cfreturn logAccessLevel>
 		 </cfcatch>
 	 </cftry>
-	 <cflog file="genieUserService" type="information" text="getUserLogAccess - #userId# - ran ok - returning #logAccessLevel#" /> 
+	  
 	 <cfreturn logAccessLevel> 	
      
     </cffunction> 

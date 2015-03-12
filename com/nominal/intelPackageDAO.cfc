@@ -1,5 +1,5 @@
 ﻿<cfcomponent output="false">
-    
+	    
     <cffunction name="init" access="public" returntype="any" hint="Constructor.">  
         <cfargument name="warehouseDSN" required="true" type="String">
         <cfargument name="warehouseDSN2" required="true" type="String">        
@@ -19,13 +19,59 @@
 		<cfset variables.crimePath=arguments.crimePath>
 		<cfset variables.intelPath=arguments.intelPath>
 		<cfset variables.intelB99Path=arguments.intelB99Path>
-		<cfset variables.genieImagePath=arguments.genieImagePath>      
+		<cfset variables.genieImagePath=arguments.genieImagePath>
+		<cfset variables.packageXml="">
+		
+		<cfsavecontent variable="variables.packageXml">
+			<IntelPackage URN="%URN%">
+			 <NominalRef>%NominalRef%</NominalRef>
+			 <Warnings>
+			    %Warnings%
+			 </Warnings>	
+			 <WarningsText><![CDATA[%WarningsText%]]></WarningsText>
+			 <Aliases>
+			    %Aliases%
+			 </Aliases>
+			 <Roles>
+			    %Roles% 
+			 </Roles>
+			 <RolesFreeText><![CDATA[%RolesFreeText%]]></RolesFreeText>
+			 <Addresses>
+			   %Addresses%
+			 </Addresses>
+			 <Intels>
+			   %Intels%
+			 </Intels>
+			 <IntelFreeText><![CDATA[%IntelFreeText%]]></IntelFreeText>
+			 <Telephones>
+			   %Telephones%
+			 </Telephones>   
+			 <Vehicles>
+			   %Vehicles%
+			 </Vehicles>
+			 <AssociateIncludeWarningPhoto>%AssociateIncludeWarningPhoto%</AssociateIncludeWarningPhoto>
+			 <Associates>
+			   %Associates%
+			 </Associates>
+			 <OtherText><![CDATA[%OtherText%]]></OtherText>
+			</IntelPackage>
+		</cfsavecontent>
+		
+        <cfset variables.warningXml="<Warning>%Warning%</Warning>#chr(10)#">
+        <cfset variables.aliasXml="<Alias>%Alias%</Alias>#chr(10)#">
+        <cfset variables.rolesXml="<Role>%Role%</Role>#chr(10)#">
+		<cfset variables.addressXml="<Address>%Address%</Address>#chr(10)#">
+        <cfset variables.telephoneXml="<Telephone>%Telephone%</Telephone>#chr(10)#">
+		<cfset variables.vehicleXml="<Vehicle>%Vehicle%</Vehicle>#chr(10)#">
+        <cfset variables.associateXml="<Associate>%Associate%</Associate>#chr(10)#">
+		<cfset variables.intelXml="<Intel>%Intel%</Intel>#chr(10)#">			
            
         <cfreturn this />  
     </cffunction>
 
 	<cffunction name="createIntelPackage" access="public" returntype="any">
 		<cfargument name="packageForm" type="struct" required="true" hint="form contaning intel package requirements">
+		<cfargument name="urn" type="string" required="false" default="" hint="if an urn passed then, we have an update not a create">
 		
 		<cfset var sReturn=StructNew()>
 		<cfset var crimeNo=''>
@@ -40,15 +86,69 @@
 		<cfset var iIntel=1>
 		<cfset var iWarn=1>
 		<cfset var iAlias=1>
+		<cfset var thisPackageXml=duplicate(variables.packageXml)>
+		<cfset var thisCrime="">
+		<cfset var incCrimeXml="">
+		<cfset var thisCrimeText="">
+		<cfset var thisWarning="">
+		<cfset var incWarningXml="">
+		<cfset var thisWarningText="">		
+		<cfset var thisAlias="">
+		<cfset var incAliasXml="">
+	    <cfset var thisAddress="">
+		<cfset var incAddressXml="">
+		<cfset var thisAssociate="">
+		<cfset var incAssociateXml="">
+		<cfset var incAssocPhotoWarn=false>
+		<cfset var thisIntel="">
+		<cfset var incIntelXml="">
+		<cfset var thisIntelText="">
+		<cfset var thisTelephone="">
+		<cfset var incTelephoneXml="">
+		<cfset var thisVehicle="">
+		<cfset var incVehicleXml="">
+		<cfset var thisOtherText="">
+		<cfset var qNextSerial="">
+		<cfset var newUrn="">
+		<cfset var qInsert="">
+		<cfset var versionNo="">
+		<cfset var qUpdate="">
+		<cfset var minSal=99>
+		<cfset var iNext=0>
+		<cfset var packageType="">
 		<cfset var lisCrimesOutput="">
+		
+		<!--- no URN so we need to generate one --->
+		<cfif Len(urn) IS 0>
+			<cfquery name="qUrn" datasource="#variables.warehouseDSN#">
+				SELECT SERIAL
+				FROM   browser_owner.INTELL_PACKAGE_SERIALS
+				WHERE  YEAR = <cfqueryparam value="#DateFormat(now(),"YY")#" cfsqltype="cf_sql_numeric" />
+			</cfquery>
+			<cfset newUrn=qUrn.SERIAL&"/"&DateFormat(now(),"YY")>
+			<cfset thisUrn=newUrn>
+			<cfset iNext=Int(qUrn.SERIAL)+1>
+			<cfquery name="qUrn" datasource="#variables.warehouseDSN#">
+				UPDATE browser_owner.INTELL_PACKAGE_SERIALS 
+				 SET   SERIAL=<cfqueryparam value="#iNext#" cfsqltype="cf_sql_numeric" />				
+				WHERE  YEAR = <cfqueryparam value="#DateFormat(now(),"YY")#" cfsqltype="cf_sql_numeric" />
+			</cfquery>
+			<cfset packageType="new">
+		<cfelse>
+			<cfset thisUrn=arguments.urn>
+			<cfset packageType="update">
+		</cfif>
 		
 		<cfif StructKeyExists(arguments.packageForm,'chkIncludeCrimes')>
 			<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
-			  <cfif not structKeyExists(sReturn,'#Replace(crimeNo,"/","","ALL")#')>
+				<cfset thisCrime=duplicate(variables.rolesXml)>
+				<cfset thisCrime=replace(thisCrime,'%Role%',crimeNo)>
+				<cfset incCrimeXml &= thisCrime>
 				<cfset StructInsert(sReturn,'#Replace(crimeNo,"/","","ALL")#',REReplaceNoCase(createCrimeSummaryHTML(crimeNo),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL'))>
-			  </cfif>
 			</cfloop>
 		</cfif>
+		
+		<cfset thisPackageXml=Replace(thisPackageXml,'%Roles%',incCrimeXml)>
 		
 		<cfoutput>
 			
@@ -107,7 +207,7 @@
 						<td valign="middle">
 							<h2 align="center">								
 								WARWICKSHIRE POLICE AND WEST MERCIA POLICE<br><br><br>
-								GENIE - INTELLIGENCE PACKAGE<br><br><br>
+								GENIE - INTELLIGENCE PACKAGE - #thisUrn#<br><br><br>
 								#packageForm.nominalFullName# #packageForm.nominalDOB#<br><br>
 							</h2>							
 						</td>
@@ -168,11 +268,15 @@
 							  WARNINGS:
 							  <br>	
 							  <cfloop list="#arguments.packageForm.chkIncludeWarnings#" index="warningDetail" delimiters=",">
+							   <cfset thisWarning=duplicate(variables.warningXml)>
+							   <cfset thisWarning=replace(thisWarning,'%Warning%',warningDetail)>
+							   <cfset incWarningXml &= thisWarning>
 							   <cfif iWarn GT 1>, </cfif>#ListGetAt(warningDetail,1,"|")# (#ListGetAt(warningDetail,2,"|",true)#)
 							   <cfset iWarn++>							   
 							  </cfloop>
 							</div>	
 							</cfif>
+							<cfset thisPackageXml=Replace(thisPackageXml,"%Warnings%",incWarningXml)>
 							
 							<cfif StructKeyExists(arguments.packageForm,'txtWarningsFreeText')>
 							  <cfif Len(arguments.packageForm.txtWarningsFreeText) GT 0>
@@ -182,9 +286,12 @@
 							   	WARNINGS:
 							    <br>	   
 							   </cfif>
-							   #arguments.packageForm.txtWarningsFreeText# 
+							   #arguments.packageForm.txtWarningsFreeText#
+							   <cfset thisWarningText=arguments.packageForm.txtWarningsFreeText>
 							  </cfif>
 							</cfif>
+							
+							<cfset thisPackageXml=Replace(thisPackageXml,"%WarningsText%",thisWarningText)>
 
 						<!--- do the aliases --->
 						<cfif StructKeyExists(arguments.packageForm,'chkIncludeAlias')>
@@ -196,12 +303,16 @@
 								<span class="dataTitle">ALIASES:</span>
 								<br>						
 								<cfloop list="#arguments.packageForm.chkIncludeAlias#" index="aliasDetail" delimiters=",">
+								  <cfset thisAlias=duplicate(variables.aliasXml)>
+							      <cfset thisAlias=replace(thisAlias,'%Alias%',aliasDetail)>
+							      <cfset incAliasXml &= thisAlias>									
 								 <cfif iAlias GT 1>, </cfif>
 									#ListGetAt(aliasDetail,1,"|")#: <b>#ListGetAt(Replace(aliasDetail,"~",",","ALL"),3,"|",true)#</b> #ListGetAt(aliasDetail,4,"|",true)# (#ListGetAt(aliasDetail,2,"|",true)#)
 								 <cfset iAlias++>
 								</cfloop>									
 							</div>
 						</cfif>
+						<cfset thisPackageXml=Replace(thisPackageXml,"%Aliases%",incAliasXml)>
 							
 						<!--- do the addresses --->
 						<cfif StructKeyExists(arguments.packageForm,'chkIncludeAddresses')>
@@ -213,10 +324,15 @@
 								<span class="dataTitle">ADDRESSES:</span>
 								<br>						
 								<cfloop list="#arguments.packageForm.chkIncludeAddresses#" index="addressDetail" delimiters=",">
+								  <cfset thisAddress=duplicate(variables.addressXml)>
+							      <cfset thisAddress=replace(thisAddress,'%Address%',addressDetail)>
+							      <cfset incAddressXml &= thisAddress>										
 									#ListGetAt(addressDetail,3,"|")#: <b>#ListGetAt(Replace(addressDetail,"~",",","ALL"),1,"|",true)#</b> (#ListGetAt(addressDetail,2,"|",true)#)<br>
 								</cfloop>									
 							</div>
 						</cfif>
+						
+						<cfset thisPackageXml=Replace(thisPackageXml,"%Addresses%",incAddressXml)>
 												
 						<!--- do the telephone numbers --->					
 						<cfif StructKeyExists(arguments.packageForm,'chkIncludeTelephones')>
@@ -228,10 +344,15 @@
 							  <span class="dataTitle">TELEPHONE NUMBERS:</span>
 							  <br>
 							<cfloop list="#arguments.packageForm.chkIncludeTelephones#" index="telDetail" delimiters=",">
+								  <cfset thisTelephone=duplicate(variables.telephoneXml)>
+							      <cfset thisTelephone=replace(thisTelephone,'%Telephone%',telDetail)>
+							      <cfset incTelephoneXml &= thisTelephone>									
 								<b>#ListGetAt(telDetail,1,"|",true)#</b> (#ListGetAt(telDetail,2,"|",true)#)<br>
 							</cfloop>	
 							</div>	
 						</cfif>
+						
+						<cfset thisPackageXml=Replace(thisPackageXml,"%Telephones%",incTelephoneXml)>
 						
 						<!--- do the vehicles --->					
 						<cfif StructKeyExists(arguments.packageForm,'chkIncludeVehicles')>
@@ -243,10 +364,15 @@
 							<span class="dataTitle">VEHICLES:</span>
 							<br>
 							<cfloop list="#arguments.packageForm.chkIncludeVehicles#" index="vehDetail" delimiters=",">
+								<cfset thisVehicle=duplicate(variables.vehicleXml)>
+							    <cfset thisVehicle=replace(thisVehicle,'%Vehicle%',vehDetail)>
+							    <cfset incVehicleXml &= thisVehicle>	
 								<b>#iif(Len(ListGetAt(vehDetail,6,"|",true)) GT 0,de(ListGetAt(vehDetail,6,"|",true)&':'),de(''))# #ListGetAt(vehDetail,1,"|",true)#</b> #ListGetAt(vehDetail,3,"|",true)# #ListGetAt(vehDetail,4,"|",true)# #ListGetAt(vehDetail,5,"|",true)# (#ListGetAt(vehDetail,2,"|",true)#)<br>
 							</cfloop>	
 							</div>	
-						</cfif>									
+						</cfif>
+						
+						<cfset thisPackageXml=Replace(thisPackageXml,"%Vehicles%",incVehicleXml)>									
 						
 						</td>
 						<td width="3%">&nbsp;</td>
@@ -271,12 +397,8 @@
 					<!--- output the crime reports page --->
 					<h2>CRIME REPORTS</h2>
 					<ol type="1">
-					<cfset lisCrimesOutput="">	
 					<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
-						<cfif listFind(lisCrimesOutput,crimeNo,",") IS 0>
 						<li>#crimeNo#</li>
-						 <cfset lisCrimesOutput=listAppend(lisCrimesOutput,crimeNo,",")>
-						</cfif>
 					</cfloop>	
 					</ol>
 					
@@ -285,11 +407,15 @@
 					  <cfdocumentitem type="pagebreak" />					  
 					  <h2>Roles Further Information</h2>	
 					  #arguments.packageForm.txtRolesFreeText#
+					  <cfset thisCrimeText=arguments.packageForm.txtRolesFreeText>
 					 </cfif>
 					</cfif>			
+					
+					<cfset thisPackageXml=Replace(thisPackageXml,"%RolesFreeText%",thisCrimeText)>	
 				
 				    <cfdocumentitem type="pagebreak" />
-					
+					<!--- do the crime reports --->
+				
 					<cfset lisCrimesOutput="">
 					<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
 					  <cfif listFind(lisCrimesOutput,crimeNo,",") IS 0>	
@@ -311,25 +437,35 @@
 					<h2>INTELLIGENCE LOGS</h2>
 					<ol type="1">
 					<cfloop list="#arguments.packageForm.chkIncludeIntel#" index="intelLogRef" delimiters=",">
-						<li>#ListGetAt(intelLogRef,1,"|")#</li>
+						<cfset thisIntel=duplicate(variables.intelXml)>
+					    <cfset thisIntel=replace(thisIntel,'%Intel%',intelLogRef)>
+					    <cfset incIntelXml &= thisIntel>	
+						<cfif Int(ListGetAt(intelLogRef,2,"|")) LT minSal>
+						  <cfset minSal=Int(ListGetAt(intelLogRef,2,"|"))>
+						</cfif>
+						<li>#intelLogRef#</li>
 					</cfloop>	
 					</ol>	
+					
+					<cfset thisPackageXml=Replace(thisPackageXml,"%Intels%",incIntelXml)>
 					
 				    <cfif StructKeyExists(arguments.packageForm,'txtIntelFreeText')>
 				     <cfif Len(arguments.packageForm.txtIntelFreeText) GT 0>
 					  <cfdocumentitem type="pagebreak" />
 					  <h2>Intelligence Further Information</h2>						
 					  #arguments.packageForm.txtIntelFreeText#
+					  <cfset thisIntelText=arguments.packageForm.txtIntelFreeText>
 					 </cfif>
-					</cfif>			
+					</cfif>	
+					
+					<cfset thisPackageXml=Replace(thisPackageXml,"%IntelFreeText%",thisIntelText)>		
 				
 				    <cfdocumentitem type="pagebreak" />
-					<!--- do the intelligence reports --->
-				
+					<!--- do the intelligence reports --->				    
 					<cfloop list="#arguments.packageForm.chkIncludeIntel#" index="intelLogRef" delimiters=",">
 					  <cfif iIntel GT 1>
 					  	  <cfdocumentitem type="pagebreak" />
-					  </cfif>
+					  </cfif>					  
 					  #REReplaceNoCase(createIntelHTML(ListGetAt(intelLogRef,1,"|")),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL')#
 					  <cfset iIntel++>					  
 					</cfloop>
@@ -343,9 +479,13 @@
 					<br>
 					<cfif not isDefined('chkAssociatesLongView')>
 					<cfloop list="#arguments.packageForm.chkIncludeAssociates#" index="assocDetail" delimiters=",">
+						<cfset thisAssociate=duplicate(variables.associateXml)>
+					    <cfset thisAssociate=replace(thisAssociate,'%Associate%',assocDetail)>
+					    <cfset incAssociateXml &= thisAssociate>	
 						#ListGetAt(assocDetail,1,"|",true)#: <b>#Replace(ListGetAt(assocDetail,3,"|",true),"~",",","ALL")# #ListGetAt(assocDetail,4,"|",true)#</b> (#ListGetAt(assocDetail,2,"|",true)#) #ListGetAt(assocDetail,5,"|",true)#<br>
 					</cfloop>							
 					<cfelse>
+					<cfset var incAssocPhotoWarn=true>	
                     <cfset iAssoc=0>				
                     <table width="100%">
                     <tr>
@@ -379,18 +519,62 @@
 					</cfif>
 				</cfif>	
 				
+				<cfset thisPackageXml=Replace(thisPackageXml,"%Associates%",incAssociateXml)>
+				<cfset thisPackageXml=Replace(thisPackageXml,"%AssociateIncludeWarningPhoto%",incAssocPhotoWarn)>
+				
 		        <cfif StructKeyExists(arguments.packageForm,'txtOtherText')>
 					<cfif Len(arguments.packageForm.txtOtherText) GT 0>
 					  <cfdocumentitem type="pagebreak" />
 					  <h2>Other Information</h2>						
 					  #arguments.packageForm.txtOtherText#
+					  <cfset thisOtherText=arguments.packageForm.txtOtherText>
 					</cfif>
 				</cfif>	
+				
+				<cfset thisPackageXml=Replace(thisPackageXml,"OtherText",thisOtherText)>
 				
 				</body>
 				</html>
 			</cfdocument>
 		</cfoutput>
+		
+		<cfif packageType IS "new">					
+			<cfquery name="qInsert" datasource="#variables.warehouseDSN#">
+				INSERT INTO browser_owner.INTELL_PACKAGES
+				(
+				  URN,
+				  YEAR,
+				  SERIAL_NO,
+				  NOMINAL_REF,
+				  HIGHEST_SAL,
+				  CREATED_BY,
+				  CREATED_BY_NAME,
+				  CREATED_DATE,
+				  COVERT,
+				  VERSION,
+				  AVAILABLE_TO_ALL,
+				  XML				  
+				)
+				VALUES
+				(
+				 <cfqueryparam value="#newUrn#" cfsqltype="cf_sql_varchar" />,
+				 <cfqueryparam value="#ListGetAt(newUrn,2,"/")#" cfsqltype="cf_sql_numeric" />,
+				 <cfqueryparam value="#ListGetAt(newUrn,1,"/")#" cfsqltype="cf_sql_numeric" />,
+				 <cfqueryparam value="#nominalRef#" cfsqltype="cf_sql_varchar" />,
+				 <cfqueryparam value="#minSal#" cfsqltype="cf_sql_numeric" />,
+				 <cfqueryparam value="#session.user.getTrueUserId()#" cfsqltype="cf_sql_varchar" />,
+				 <cfqueryparam value="#session.user.getFullName()#" cfsqltype="cf_sql_varchar" />,
+				 SYSDATE,
+				 'N',
+				 1,
+				 'Y',
+				 <cfqueryparam value="#thisPackageXml#" cfsqltype="cf_sql_clob" />  
+				)
+			</cfquery>
+			
+		<cfelse>
+			<!--- update to an existing package --->
+		</cfif>
 				
 		<cfreturn nominalPdf>
 		

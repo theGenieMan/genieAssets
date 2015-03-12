@@ -198,8 +198,6 @@
       <cfset var searchKey="">
 	  <cfset var custs=ArrayNew(1)>
       <cfset var cust="">
-    
-      <cftry>
       
       <cfquery name="qSearchResults" datasource="#variables.WarehouseDSN#" RESULT="theSql">
 			SELECT * FROM
@@ -217,8 +215,7 @@
 			   <cfif Len(structFind(searchTerms,'arrest_reason_text')) GT 0>AND CS.CUSTODY_REF=CR.CUSTODY_REF</cfif>
 			   <cfloop collection="#arguments.searchTerms#" item="searchKey">
                  <cfset searchItem=StructFind(arguments.searchTerms,PreserveSingleQuotes(searchKey))>
-				 <!--- ignore dates and warning marker --->
-				 <cflog file="custEnq" type="information" text="list find x#searchItem#x #ListFindNoCase('dob_1,dob_2,arrest_date_1,arrest_time_1,arrest_date_2,arrest_time_2,dep_date_1,dep_time_1,dep_date_2,dep_time_2,warning_marker',searchKey)#">	
+				 <!--- ignore dates and warning marker --->				 	
 				 <cfif ListFindNoCase('dob_1,dob_2,arrest_date_1,arrest_time_1,arrest_date_2,arrest_time_2,dep_date_1,dep_time_1,dep_date_2,dep_time_2,warning_marker',searchKey) IS 0>
 				    <cfif Len(searchItem) GT 0>	 
 				      AND UPPER(#iif(searchKey IS "custody_ref",de('cs.'),de(''))##PreserveSingleQuotes(searchKey)#)
@@ -282,12 +279,7 @@
 			   ORDER BY ARREST_TIME DESC
 			)
 			WHERE ROWNUM < 202
-	  </cfquery>
-	  
-		  <cfcatch type="database"> 
-		     <cflog file="custEnq" type="information" text="#cfcatch.SQL#">
-		  </cfcatch>
-	  </cftry>
+	  </cfquery>	  		  
 	  
 	  <cfif qSearchResults.RecordCount GT 0>
          <cfloop query="qSearchResults">
@@ -297,7 +289,7 @@
           <cfset ArrayAppend(custs,cust)>
          </cfloop>
       </cfif>
-	  <cflog file="custEnq" type="information" text="#theSql.SQL#">
+	  
 	  <cfreturn custs>
     
 	</cffunction>
