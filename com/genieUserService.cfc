@@ -116,7 +116,7 @@
 			select request_timestamp, reason_text, request_for, reason, session_id, server, request_for_collar, request_for_force, ethnic_code
 			from browser_owner.audit_data ad
 			where AD.USER_ID=<cfqueryparam value="#arguments.userId#" cfsqltype="cf_sql_varchar">
-			and trunc(request_timestamp) > trunc(sysdate-1)
+			and trunc(request_timestamp) > trunc(sysdate-2)
 			order by request_timestamp desc
 			)
 		WHERE rownum=1
@@ -317,8 +317,11 @@
 		<cfargument name="requestForCollar" type="string" required="false" default="" hint="update of collar of person requesting">
 		<cfargument name="requestForForce" type="string" required="false" default="" hint="update of Force of person requesting">
 	 	
+	 	<!---
 	 	<cflog file="genie" type="information" text="updateSession (Service) called #session.urlToken#" >
-		 
+	 	--->
+		
+		<!--- 
 		<cfsavecontent variable="sessionDetails">
 		<cfdump var="#session#" format="text" > 
 		</cfsavecontent>
@@ -327,7 +330,8 @@
 		 
 		<cfif isDefined('session.lastDPAUpdate')>
 		<cflog file="genie" type="information" text="updateSession (Service) before = #session.lastDPAUpdate#,#session.audit_code#,#session.audit_for#,#session.audit_details#,#session.ethnic_code#,#session.audit_for_collar#,#session.audit_for_force#">
-		</cfif> 
+		</cfif>
+		---> 
 	 	
 	 	<cfset session.lastDPAUpdate=now()>		
 		<cfset session.audit_code=arguments.reasoncode>
@@ -336,9 +340,11 @@
 		<cfset session.ethnic_code=arguments.ethnicCode>
 		<cfset session.audit_for_collar=arguments.requestForCollar>
 		<cfset session.audit_for_force=arguments.requestForForce>
-			 
+		
+		<!---	 
 		<cflog file="genie" type="information" text="updateSession (Service) after = #session.lastDPAUpdate#,#session.audit_code#,#session.audit_for#,#session.audit_details#,#session.ethnic_code#,#session.audit_for_collar#,#session.audit_for_force#">	
-		 
+		--->
+		
 	</cffunction>       
 
     <cffunction name="getUserLogAccessLevel" access="public" returntype="string" output="false" hint="returns users log access level for intel logs based on user id">

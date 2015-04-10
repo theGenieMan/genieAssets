@@ -129,7 +129,11 @@
         </cfquery>        
         
         <cffile action="write" file="#errorFilePageHtml#" output="#errorData.pageHtml#">
-		<cffile action="write" file="#errorFileResponseHtml#" output="#errorData.responseText#"> 
+		<cfif structKeyExists(errorData,'responseText')>
+			<cffile action="write" file="#errorFileResponseHtml#" output="#errorData.responseText#">
+		<cfelse>
+			<cffile action="write" file="#errorFileResponseHtml#" output="No Response Text Available">
+		</cfif> 
         
         <cfreturn errorUrn>
      
