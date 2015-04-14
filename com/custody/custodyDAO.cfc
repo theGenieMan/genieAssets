@@ -224,6 +224,9 @@
 	                 <cfelse>
 	                  =
 	                 </cfif>
+	                 <cfif searchKey IS "custody_ref" AND Left(searchItem,3) IS "23/">
+					 	 <cfset searchItem="23"&Right(searchItem,Len(searchItem)-3)>
+					 </cfif>
 	                 <cfqueryparam value="#UCase(searchItem)#" cfsqltype="cf_sql_varchar">
 	                </cfif>			 
 				 </cfif>
