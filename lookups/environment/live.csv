@@ -39,14 +39,14 @@ Log_path|d:\logs\genie\
 DVLA_Log_path|d:\logs\dvla\
 BaseDir|\\svr20200\d$\opdocs\
 OpenURL|http://websvr.intranet.wmcpolice/index_email.cfm?page_address=
-OpenPastespath|d:\genie_data\genie_pastes\
+OpenPastespath|\\svr20200\f$\genie_data\genie_pastes\
 OpenPastesURL|/genie_data/genie_pastes/
 str_Image_URL|/genie_photos/	
 str_Image_Path|\genie_photos\	
 str_Common_Dir|\genie\code\common\code\	
 str_Image_Temp_Dir|\\svr20200\s$\custody_photos\
 ErrorURL|/genie/code/error/
-str_Transforms|\\svr20200\g$\inetpub\wwwroot\genie\code\transforms
+str_Transforms|\\svr20200\f$\inetpub\wwwroot\documentViewers\transforms
 NFLMS_Photos|\\svr20458\shogunphotos\
 NIR_Link|http://crimes.intranet.wmcpolice/forms/frmservlet?config=NIR_LIVE&otherparams=P_SUBJECT=~nominalRef~+P_COLLAR=~userCollar~+P_USERID=~userId~
 ANPR_Link|http://websvr.intranet.wmcpolice/index_email.cfm?page_address=/applications/anpr/code/search.cfm
@@ -85,16 +85,17 @@ stepPNCWantedLink|http://websvr.intranet.wmcpolice/applications/packages_pilot/c
 dpaChecking|true
 intelFreeTextUrl|http://svr20423:9000/action=query&printfields=*&TotalResults=true&MaxResults=300&summary=quick&highlight=Terms&DatabaseMatch=Intel&Sort=~sort~&MinScore=~minScore~
 intelFreeTextTesters|n_bla003,p_pra002,23004364,23004478,23004598,23004649,23004671,23004808lc,23005078,23005522,23006180,23006222,c_met001,23000053,23004736,b_col003
-intelFTSTempDir|\\svr20200\g$\genie_data\intelFTSTemp\
-crimeTempDir|\\svr20200\g$\genie_data\crimeTemp\
-custodyTempDir|\\svr20200\g$\genie_data\custodyTemp\
-caseTempDir|\\svr20200\g$\genie_data\caseTemp\
-ssTempDir|\\svr20200\g$\genie_data\ssTemp\
-nominalTempDir|\\svr20200\g$\genie_data\nominalTemp\
+intelFTSTempDir|\\svr20200\f$\genie_data\intelFTSTemp\
+crimeTempDir|\\svr20200\f$\genie_data\crimeTemp\
+custodyTempDir|\\svr20200\f$\genie_data\custodyTemp\
+caseTempDir|\\svr20200\f$\genie_data\caseTemp\
+ssTempDir|\\svr20200\f$\genie_data\ssTemp\
+nominalTempDir|\\svr20200\f$\genie_data\nominalTemp\
 genieProxy|/genieObjAjaxProxy/genieProxy.cfc
-mergeAttachDir|\\svr20306\nominalMergeAttachments\
+mergeAttachDir|\\svr20200\f$\genie_data\nominalMergeAttachments\
 redirectorUrl|/redirector/redirector.cfm?auditRequired=IFNOTSET&auditInfo=
 ttlLink|/redirector/redirector.cfm?type=ttl
+packagePDFGroups|SMA_GENIE_ADMINISTRATORS,J PS Intel IPU,SM_FIELD INTELLIGENCE OFFICER,J PS Intel PNSB,J PS Intel
 genieUserGroups|SM_crimes users,SM_GENIE_USERS,SM_UNIFORM,SM_SPECIAL,SM_COMMUNITY SUPPORT OFFICER,SM_PCSO,SM_PCSO Youth Engagement
 nameXGroups|SM_GENIE_NAMEX_UPDATER
 dvsGroups|SM_GENIE_DVS
@@ -105,7 +106,7 @@ genieAdminGroups|SMA_GENIE_ADMINISTRATORS
 bailCondsGroups|SM_PNSB OPERATOR,SM_PNSB SUPERVISOR,SMA_GENIE_ADMINISTRATORS
 packagePDFGroups|SMA_GENIE_ADMINISTRATORS,J PS Intel IPU,SM_FIELD INTELLIGENCE OFFICER,J PS Intel PNSB,J PS Intel,SM_PS Intelligence Non Sensitive,SM_DETECTIVE CONSTABLE FIELD INTELLIGENCE,J PS PVP,J PS PVP HAU,D PVP,SM_PS Intelligence Department,SM_PS Major Investigation
 mopiDisclosureRoles|SUPPORT OFFICER - HARM ASSESSMENT UNIT,DEVELOPMENT OFFICER - HARM ASSESSMENT UNIT,MISSING PERSONS COORDINATOR,CHILD PROTECTION LIASON OFFICER,HAU BUSINESS COORDINATOR,SUPERVISOR - HARM ASSESSMENT UNIT,ANALYST PROGRAMMER,SYSTEMS DEVELOPMENT ANALYST
-CRIMESAttachmentsDir|\\svr20200\crimes_Attachments\
-errorHtmlDirectory|\\svr20200\g$\genie_data\errors\
+CRIMESAttachmentsDir|/crimesAttachments/
+errorHtmlDirectory|\\svr20200\f$\genie_data\errors\
 errorHtmlPath|/genie_errors/
 dpaTimeout|5
