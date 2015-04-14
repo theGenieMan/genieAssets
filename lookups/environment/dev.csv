@@ -1,16 +1,16 @@
 Form_Title|GENIE DEVELOPMENT
-WarehouseDSN|wmercia_jdbc
-WarehouseDSN2|wmercia_odbc
-warehouse_user|browser_owner
-Warehouse_pwd|brow61dell
-LookupDSN|wmercia_jdbc
-personSearchProcedure|GE_NAMEX_SEARCH_3_1.GE_Nominal_Array
---WarehouseDSN|waredev_jdbc
---WarehouseDSN2|waredev
+--WarehouseDSN|wmercia_jdbc
+--WarehouseDSN2|wmercia_odbc
 --warehouse_user|browser_owner
---warehouse_pwd|browdev27
---LookupDSN|waredev_jdbc
---personSearchProcedure|GE_NAMEX_SEARCH.GE_Nominal_Array
+--Warehouse_pwd|brow61dell
+--LookupDSN|wmercia_jdbc
+--personSearchProcedure|GE_NAMEX_SEARCH_3_1.GE_Nominal_Array
+WarehouseDSN|waredev_jdbc
+WarehouseDSN2|waredev
+warehouse_user|browser_owner
+warehouse_pwd|browdev27
+LookupDSN|waredev_jdbc
+personSearchProcedure|GE_NAMEX_SEARCH.GE_Nominal_Array
 ErrorDSN|GENIE_Errors
 CRIMES|CRIMES
 AuditDSN|waredev_jdbc

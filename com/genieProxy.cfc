@@ -5,7 +5,7 @@
 	    
 	<cfif SERVER_NAME IS "genie.intranet.wmcpolice"  OR SERVER_NAME IS "genie2.intranet.wmcpolice" OR SERVER_NAME IS "genie3.intranet.wmcpolice"
 	   OR SERVER_NAME IS "SVR20424" OR SERVER_NAME IS "SVR20306" 
-	   OR SERVER_NAME IS "SVR20623" OR SERVER_NAME IS "SVR20624">
+	   OR SERVER_NAME IS "SVR20623" OR SERVER_NAME IS "SVR20624" OR SERVER_NAME IS "SVR20031">
 	     <cfset env="LIVE">	  
 	   <cfelseif SERVER_NAME IS "geniedev.intranet.wmcpolice" OR SERVER_NAME IS "SVR20312">
 	     <cfset env="DEV">	 	  
@@ -59,7 +59,7 @@
         AND      NOMINAL_REF=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">
         </cfquery>
 
-   	    <cflog file="genie" type="information" text="Update favourite nominals notes for #arguments.nominalRef# have been updated">        
+   	    <cflog file="favNominals" type="information" text="Update favourite nominals notes for #arguments.nominalRef# have been updated">        
              
     </cffunction> 
 
@@ -77,7 +77,7 @@
         AND      NOMINAL_REF=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar">
         </cfquery>
 
-   	    <cflog file="genie" type="information" text="Favourite nominals #arguments.nominalRef# has been deleted for #arguments.userId#">        
+   	    <cflog file="favNominals" type="information" text="Favourite nominals #arguments.nominalRef# has been deleted for #arguments.userId#">        
              
     </cffunction> 
 
@@ -454,8 +454,7 @@
 
   <cffunction name="updateSessionUser" access="remote" returntype="any" output="false" hint="gets ois incidents by initial type">
   	  <cfargument name="user" type="string" required="true">
-	
-	  <cflog file="genie" text="is there a session? #isDefined('session')#" type="information" >	
+		  	
 	  <cfset session.loggedInUser=user>	
 	
 	  <cfreturn "User changed to "&user>	
@@ -481,8 +480,6 @@
 	  <cfset var thisNominal=""> 	
 	  <cfset var genieService=createObject("component","genieObj.genieService").init()>
 	  <cfset var iNomCount=0>
-	  
-	  <cflog file="genie" text="322 quick genie search, Forename: #arguments.nominalForename#; Surname: #arguments.nominalSurname#; DOB: #arguments.nominalDOB#; Ref: #arguments.nominalRef# by #arguments.user#" type="information" />	
 	
       <!--- setup the search structure --->	
 		
@@ -644,16 +641,16 @@
 	  <cfelseif theEnv IS "TEST">
 	  	 <cfset arguments.dsn="waredev">
 	  </cfif> 	    
-	  
-	  <cflog file="genie" type="information" text="genieProxy getMergeList env=#theEnv# dsn=#arguments.dsn# RequestBy=#arguments.requestBy#" >
-	    
+	  	    
 	  <cfquery name="qMergeList" datasource="#arguments.DSN#">
 		SELECT ml.*, nl.NOMINAL_REF, nl.NOMINAL_NAME, nl.NOMINAL_DOB, nl.NOMINAL_PNCID, nl.NOMINAL_CRO, nl.NOMINAL_NT
 		FROM   browser_owner.NOMINAL_MERGE_LIST ml, browser_owner.NOMINALS_TO_MERGE nl
 		WHERE  ml.MERGE_ID=nl.MERGE_ID
 		AND    nl.CORRECT_NOMINAL='Y'
-		<cfif Len(actioned) GT 0>
+		<cfif Len(actioned) IS 1>
 		AND    ml.ACTIONED=<cfqueryparam value="#actioned#" cfsqltype="cf_sql_varchar" />
+		<cfelseif Len(actioned) GT 1>
+		AND    ml.ACTION_RESULT=<cfqueryparam value="#actioned#" cfsqltype="cf_sql_varchar" />
 		</cfif>
 		<cfif Len(filterYear) GT 0>
 		AND    TO_CHAR(ml.REQUEST_DATE,'YYYY')=<cfqueryparam value="#filterYear#" cfsqltype="cf_sql_varchar" />
