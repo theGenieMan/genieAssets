@@ -1741,7 +1741,7 @@
 	 	<cfelse>
 	   		<cfset logData &= "|N|None">
 	 	</cfif>		 
-	   <cfset lisIntel=listAppend(lisIntel,logData,",")>
+	   <cfset lisIntel=listAppend(lisIntel,logData,"#chr(10)#")>
 	   <cfif arguments.includeNominals IS "Y">
 	   	   <cfset arrNominals=arrayNew(1)>
 	       <cfset qNomsOnLog=variables.intelDAO.getNominalsOnLog(intel[iInt].getLOG_REF())>
