@@ -141,10 +141,13 @@
 		
 		<cfif StructKeyExists(arguments.packageForm,'chkIncludeCrimes')>
 			<cfloop list="#arguments.packageForm.chkIncludeCrimes#" index="crimeNo" delimiters=",">
-				<cfset thisCrime=duplicate(variables.rolesXml)>
-				<cfset thisCrime=replace(thisCrime,'%Role%',crimeNo)>
-				<cfset incCrimeXml &= thisCrime>
-				<cfset StructInsert(sReturn,'#Replace(crimeNo,"/","","ALL")#',REReplaceNoCase(createCrimeSummaryHTML(crimeNo),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL'))>
+				<cfif ListFind(lisCrimesOutput,crimeNo,",") IS 0>
+					<cfset thisCrime=duplicate(variables.rolesXml)>
+					<cfset thisCrime=replace(thisCrime,'%Role%',crimeNo)>
+					<cfset incCrimeXml &= thisCrime>
+					<cfset StructInsert(sReturn,'#Replace(crimeNo,"/","","ALL")#',REReplaceNoCase(createCrimeSummaryHTML(crimeNo),'<!DOCTYPE[^>[]*(\[[^]]*\])?>','','ALL'))>
+					<cfset lisCrimesOutput=ListAppend(lisCrimesOutput,crimeNo,",")>
+				</cfif>
 			</cfloop>
 		</cfif>
 		
