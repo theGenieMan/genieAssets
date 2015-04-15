@@ -4613,6 +4613,37 @@
      
     </cffunction> 
     
+    <cffunction name="getNominalFamily" access="remote" returntype="any" output="false" hint="Gets list of family nominals for a given nominal ref">
+	 <cfargument name="user" type="string" required="true" hint="user requesting">
+	 <cfargument name="nominalRef" type="string" required="true" hint="nominal ref of nominal to get photo for">
+    	
+     <cfset var nominals=variables.associateDAO.getNominalFamily(nominalRef=arguments.nominalRef)>          
+     <cfset var warnings=variables.warningsDAO.getNominalSearchWarnings(nominals)>
+	 <cfset var ignore="">
+	 <cfset var photoStruct=StructNew()>
+     <cfset var photoUrl=ArrayNew(1)>     
+     <cfset var photoDates=ArrayNew(1)>
+	 <cfset var addresses=ArrayNew(1)>
+	        
+	     <cfset ignore=QueryAddColumn(nominals,"WARNINGS","VarChar",warnings)>
+	     
+	     <cfset photoStruct=variables.photoDAO.getNominalLatestPhotoForSearch(nominals)>
+	     <cfset photoUrl=photoStruct.photoUrls>
+	     <cfset photoDates=photoStruct.photoDates>
+	     
+	     <cfset ignore=QueryAddColumn(nominals,"PHOTO_URL","VarChar",photoUrl)>
+	     <cfset ignore=QueryAddColumn(nominals,"PHOTO_DATE","VarChar",photoDates)>
+		  
+		 <cfloop query="nominals">
+				 <cfset arrayAppend(addresses,getWestMerciaNominalLatestAddress(NOMINAL_REF))>
+		 </cfloop>
+		 
+		 <cfset ignore=QueryAddColumn(nominals,"ADDRESS","VarChar",addresses)>   	     
+    	     
+     <cfreturn nominals>
+     
+    </cffunction>     
+    
     <cffunction name="doGenieAudit" access="public" returntype="void" output="false" hint="adds information to the genie audit file">
     	<cfargument type="string" name="userId" required="true" hint="userId to audit for">
     	<cfargument type="string" name="sessionId" required="true" hint="sessionId to audit for">    	
