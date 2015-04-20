@@ -106,4 +106,4 @@ mopiDisclosureRoles|SUPPORT OFFICER - HARM ASSESSMENT UNIT,DEVELOPMENT OFFICER -
 CRIMESAttachmentsDir|\\svr20200\d$\assets\crimesAttachments\
 errorHtmlDirectory|\\svr20200\g$\genie_data\errors\
 errorHtmlPath|/genie_errors/
-dpaTimeout|5
+dpaTimeout|30
