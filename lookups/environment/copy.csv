@@ -63,6 +63,7 @@ STEP_Link|http://websvr.intranet.wmcpolice/redirector.cfm?type=STEP&ref=
 TACAD_Link|http://websvrdev.intranet.wmcpolice/index_email.cfm?page_address=/applications/fit/code/genie_tacad_list.cfm?fromGenie=Y%26nominal_ref=
 rispUrl|http://172.50.1.2/WMPRispService.asmx
 rispPort|8080
+wMidsTimeout|115
 rispSoapAction|www.pito.org/westmidsregion/risp/webservice:submitRispRequestIn    		
 rispXmlDir|d:\genie_assets\risp\
 formsBaseDir|d:\genie_assets\formLookups\

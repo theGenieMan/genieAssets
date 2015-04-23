@@ -59,6 +59,7 @@ damsFWXUrl|http://webdam.intranet.wmcpolice/fotoweb/locard/imageNumber.fwx?archi
 forensicArchivePath|f:\images\indices\archive_index
 rispUrl|http://172.50.1.2/WMPRispService.asmx
 rispPort|8080
+wMidsTimeout|115
 rispSoapAction|www.pito.org/westmidsregion/risp/webservice:submitRispRequestIn    
 personSearchProcedure|GE_NAMEX_SEARCH_3_1.GE_Nominal_Array
 rispXmlDir|d:\genie_assets\risp\

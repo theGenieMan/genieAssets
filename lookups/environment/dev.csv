@@ -1,16 +1,16 @@
 Form_Title|GENIE DEVELOPMENT
---WarehouseDSN|wmercia_jdbc
---WarehouseDSN2|wmercia_odbc
---warehouse_user|browser_owner
---Warehouse_pwd|brow61dell
---LookupDSN|wmercia_jdbc
---personSearchProcedure|GE_NAMEX_SEARCH_3_1.GE_Nominal_Array
-WarehouseDSN|waredev_jdbc
-WarehouseDSN2|waredev
+WarehouseDSN|wmercia_jdbc
+WarehouseDSN2|wmercia_odbc
 warehouse_user|browser_owner
-warehouse_pwd|browdev27
-LookupDSN|waredev_jdbc
-personSearchProcedure|GE_NAMEX_SEARCH.GE_Nominal_Array
+Warehouse_pwd|brow61dell
+LookupDSN|wmercia_jdbc
+personSearchProcedure|GE_NAMEX_SEARCH_3_1.GE_Nominal_Array
+--WarehouseDSN|waredev_jdbc
+--WarehouseDSN2|waredev
+--warehouse_user|browser_owner
+--warehouse_pwd|browdev27
+--LookupDSN|waredev_jdbc
+--personSearchProcedure|GE_NAMEX_SEARCH.GE_Nominal_Array
 ErrorDSN|GENIE_Errors
 CRIMES|CRIMES
 AuditDSN|waredev_jdbc
@@ -64,6 +64,7 @@ STEP_Link|http://development.intranet.wmcpolice/redirector/redirector.cfm?type=S
 TACAD_Link|http://websvr.intranet.wmcpolice/index_email.cfm?page_address=/applications/fit/code/genie_tacad_list.cfm?fromGenie=Y%26nominal_ref=
 rispUrl|http://172.50.1.2/WMPRispService.asmx
 rispPort|8080
+wMidsTimeout|115
 rispSoapAction|www.pito.org/westmidsregion/risp/webservice:submitRispRequestIn    		
 rispXmlDir|d:\genie_assets\risp\
 formsBaseDir|d:\genie_assets\formLookups\

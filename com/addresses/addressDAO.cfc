@@ -223,7 +223,7 @@
           #searchTerms#
           #variables.rispAddressSearchFooter#
         </cfxml>      
-        </cfoutput>
+        </cfoutput>       
                 
             <cfset iRequestStart=getTickCount()>
 			<cfhttp url="#variables.rispURL#" method="POST" result="searchResult" timeout="#variables.wMidsTimeout#"

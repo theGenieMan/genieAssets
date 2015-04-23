@@ -460,7 +460,7 @@
 		 <cfset returnStruct.url=intelFTSUrl>
 		 <cfset returnStruct.recordCount=0>
 		 <cfset returnStruct.totalHits=0>
-		 <cfset returnStruct.hasHigherAccessLogs=false>		
+		 <cfset returnStruct.hasHigherAccessLogs=false>
 		  
 		 <cfhttp url="#returnStruct.url#" resolveurl="no" method="get" />
 		 

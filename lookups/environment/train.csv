@@ -45,7 +45,7 @@ str_Image_Path|\genie_photos\
 str_Common_Dir|\genie_dev22\code\common\code\	
 str_Image_Temp_Dir|d:\genie_data\genie_photos
 ErrorURL|/genie/code/error/
-str_Transforms|d:\inetpub\wwwroot\genie\code\transforms
+str_Transforms|d:\inetpub\wwwroot\documentViewers\transforms
 NFLMS_Photos|d:\genie_data\genie_train_nflms_images\
 NIR_Link|http://svr20414/forms/frmservlet?config=NIR_TRAIN&otherparams=P_SUBJECT=~nominalRef~+P_COLLAR=~userCollar~+P_USERID=~userId~
 ANPR_Link|http://websvr.intranet.wmcpolice/index_email.cfm?page_address=/applications/anpr/code/search.cfm
@@ -54,6 +54,7 @@ STEP_Link|/redirector/redirector.cfm?type=STEP&ref=
 TACAD_Link|http://websvrdev.intranet.wmcpolice/index_email.cfm?page_address=/applications/fit/code/genie_tacad_list.cfm?fromGenie=Y%26nominal_ref=
 rispUrl|http://172.50.1.2/WMPRispService.asmx
 rispPort|8080
+wMidsTimeout|115
 rispSoapAction|www.pito.org/westmidsregion/risp/webservice:submitRispRequestIn    
 personSearchProcedure|GE_NAMEX_SEARCH.GE_Nominal_Array
 rispXmlDir|d:\genie_assets\risp\

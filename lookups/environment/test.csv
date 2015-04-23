@@ -65,6 +65,7 @@ damsUrl|http://webdamtest.intranet.wmcpolice/applications/dam/index.cfm?event=lo
 forensicArchivePath|f:\images\indices\archive_index
 rispUrl|http://172.50.1.2/WMPRispService.asmx
 rispPort|8080
+wMidsTimeout|115
 rispSoapAction|www.pito.org/westmidsregion/risp/webservice:submitRispRequestIn    
 rispXmlDir|d:\genie_assets\risp\
 formsBaseDir|d:\genie_assets\formLookups\

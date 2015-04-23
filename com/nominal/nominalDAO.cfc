@@ -676,7 +676,7 @@
       <cfset var tabs=structNew()>
       <cfset var qTabs="">
       
-			<CFQUERY NAME="qTabs" DATASOURCE="#Application.WarehouseDSN#">
+			<CFQUERY NAME="qTabs" DATASOURCE="#variables.WarehouseDSN#">
 			SELECT r.role, a.adr, b.bail, p.proc, l.link, v.veh, t.tel, c.cust, i.int, m.misper, ass.assoc, nd.docs, nf.feat, w.warr, fp.fp, org.org, step.step, occ.occs, warn.warns,ss.ss,s27.s27, rmp.rmp
 			FROM (SELECT MAX('Y') role FROM browser_owner.NOMINAL_ROLES WHERE NOMINAL_REF=<cfqueryparam value="#arguments.nominalRef#" cfsqltype="cf_sql_varchar"> and rownum < 2) r,
 			     (SELECT MAX('Y') adr  FROM browser_owner.GE_ADDRESSES addr, browser_owner.GE_ADD_NOMINALS nom 
@@ -739,7 +739,7 @@
       <cfset var nominalName="">
       <cfset var qNomName="">
       
-			<CFQUERY NAME="qNomName" DATASOURCE="#Application.WarehouseDSN#">
+			<CFQUERY NAME="qNomName" DATASOURCE="#variables.WarehouseDSN#">
 			select  REPLACE(REPLACE(LTRIM(
                     RTRIM(ND.TITLE)||' '||
 					        RTRIM(NS.SURNAME_1)||DECODE(NS.SURNAME_2,NULL,'','-'||NS.SURNAME_2)||', '||
