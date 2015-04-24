@@ -385,8 +385,7 @@
 
      <cfset roleSettings.dpaClear=true>
 	 <cfset roleSettings.dpaTimeout=variables.defaultDPATimeout>
-	  
-	 <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role#" />
+	  	 
      <cftry>        
 		 <cfquery name="qRoleInfo" datasource="#variables.WarehouseDSN#">
 		 SELECT CLEAR_DPA, DPA_TIMEOUT
@@ -396,10 +395,7 @@
 		 		  
 		 <cfif qRoleInfo.RecordCount GT 0>		    	 
 		   <cfset roleSettings.dpaClear=iif(qRoleInfo.CLEAR_DPA IS "Y",de(true),de(false))>
-		   <cfset roleSettings.dpaTimeout=qRoleInfo.DPA_TIMEOUT>
-		   <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role# - record found - setting to clear dpa to #roleSettings.dpaClear#, timeout to #roleSettings.dpaTimeout#" />   		  
-		 <cfelse>
- 	 	   <cflog file="genieUserService" type="information" text="getUserRoleSettings - #role# - no record found - returning defaults" />  		 
+		   <cfset roleSettings.dpaTimeout=qRoleInfo.DPA_TIMEOUT>		   		  		   		 
 		 </cfif>
 		 	
 		 <cfcatch type="database">
