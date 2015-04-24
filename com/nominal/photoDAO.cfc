@@ -430,6 +430,19 @@
 	    <cfset var uniqueRef=arguments.SessionId&"_"&DateFormat(now(),"DDMMYYYY")&TimeFormat(now(),"HHmmss")>
 	    <cfset var timestamp=DateFormat(now(),"YYYY-MM-DD")&"T"&TimeFormat(now(),"HH:mm:ss")&".0Z">
 	    
+	    <!--- see if we already have a photo for this image as it's previoulsy been requested today
+	          if we do then we just need to return the URL and not make the HTTP request to West Mids.
+	          if not we have to go to wMids and get the photo --->
+	    <cfset imageFilename=arguments.searchTerms.forceId&Replace(Replace(arguments.searchTerms.sysId,":","","ALL"),"/","","ALL")&arguments.searchTerms.appRef&".jpg">
+		<cfset imagePath=variables.genieImagePath&"\risp\"&imageFilename>
+        <cfset imageUrl=variables.genieImageDir&"risp/"&imageFilename>
+		
+		<cfif FileExists(imagePath)>
+			<cflog file="wMidsPhotoDAO" text="already have an image for #imageFilename# url set to #imageUrl#">
+			<cfset photo.setPHOTO_URL(imageUrl)>
+		<cfelse>
+	    <!--- no image exists, do the risp request --->
+			
 	    <!--- replace the user, terminal, unique ref and timestamp vars --->
 	    <cfset rispImageRequestHeader=ReplaceNoCase(rispImageRequestHeader,"**userId**",arguments.userId,"ALL")>
 	    <cfset rispImageRequestHeader=ReplaceNoCase(rispImageRequestHeader,"**terminalId**",arguments.terminalId,"ALL")>  
@@ -485,9 +498,11 @@
                     <cfset imageArrayXml=XmlSearch(resultXml,"//rispImg")>
                     
                     <cfloop from="1" to="#ArrayLen(imageArrayXml)#" index="iImg">
-                      <cfset imageFilename=arguments.searchTerms.forceId&Replace(Replace(arguments.searchTerms.sysId,":","","ALL"),"/","","ALL")&arguments.searchTerms.appRef&uniqueRef&".jpg">
+					  <!---
+                      <cfset imageFilename=arguments.searchTerms.forceId&Replace(Replace(arguments.searchTerms.sysId,":","","ALL"),"/","","ALL")&arguments.searchTerms.appRef&uniqueRef&".jpg">                      
                       <cfset imagePath=variables.genieImagePath&"\risp\"&imageFilename>
-                      <cfset imageUrl=variables.genieImageDir&"risp/"&imageFilename>      
+                      <cfset imageUrl=variables.genieImageDir&"risp/"&imageFilename>
+                      --->      
                       
                       <cftry>
                       <cfset theImage=imageReadBase64(imageArrayXml[iImg].imageBase64.xmlText)>
@@ -499,12 +514,15 @@
                           <cfset photo.setPHOTO_URL('')>
                       </cfcatch>
                       </cftry>
+                      
+                      <cflog file="wMidsPhotoDAO" text="no photo for #imageFilename# now downloaded and url set to #imageUrl#">
+                      
                     </cfloop>           
                                                                                               
                   </cfif>
               </cfif>
             </cfif>
-                    
+          </cfif>           
     <cfreturn photo>
       
     </cffunction>

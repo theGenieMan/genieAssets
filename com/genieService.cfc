@@ -560,6 +560,7 @@
           <cfset searchResult.nominals[x].photo=CreateObject('component','nominal.photo').init()>
          
           <cfif searchResult.nominals[x].getRISP_PHOTO_EXISTS() IS "Y">
+		  	  <!---
               <cfset imageSearchTerms.appRef=searchResult.nominals[x].getAPP_REF()>
               <cfset imageSearchTerms.sysId=searchResult.nominals[x].getSYS_REF()>
               <cfset imageSearchTerms.forceId=searchResult.nominals[x].getFORCE_REF()>   
@@ -567,7 +568,7 @@
                                                               userId=audit.enquiryUser,
                                                               terminalId=audit.terminalId,
                                                               sessionId=audit.sessionId)> 
-                    
+              --->      
           </cfif>
          
          </cfloop>

@@ -369,17 +369,17 @@
           #variables.rispPersonSearchFooter#
         </cfxml>      
         </cfoutput>
-                
-            <cfset iRequestStart=getTickCount()>
+            
+            
 			<cfhttp url="#variables.rispURL#" method="POST" result="searchResult" timeout="#variables.wMidsTimeout#"
 						 port="#variables.rispPort#" useragent="">
 				<cfhttpparam type="header" name="SOAPAction" value='"#variables.rispSoapAction#"'> 
 				<cfhttpparam type="xml" name="body" value="#searchXml#">       
 			</cfhttp>         
-            <cfset iRequestEnd=getTickCount()>
             
             <cfset westMidsResult.status=searchResult.statusCode>
-            
+			<cfset westMidsResult.overflow=false>
+                        
             <cfif westMidsResult.status is "200 OK">
               <cfset westMidsResult.searchOk=true>
               <cfif isXml(searchResult.fileContent)>
@@ -408,9 +408,13 @@
                     <cfset westMidsResult.nominals=ArrayNew(1)>
                    
                     <cfset nominalArrayXml=XmlSearch(resultXml,"//namesearchresult")>
-                    
+                                        
                     <cfloop from="1" to="#ArrayLen(nominalArrayXml)#" index="iNom">                                        
                       <cfset ArrayAppend(westMidsResult.nominals,readWestMidsNominalSearchResult(xmlObj=nominalArrayXml[iNom]))>
+					  <cfif iNom GT 500>					
+					  	  <cfset westMidsResult.overflow=true>
+						  <cfbreak>
+					  </cfif>
                     </cfloop>
                     
                   <cfelse>
