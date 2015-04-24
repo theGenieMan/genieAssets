@@ -437,8 +437,7 @@
 		<cfset imagePath=variables.genieImagePath&"\risp\"&imageFilename>
         <cfset imageUrl=variables.genieImageDir&"risp/"&imageFilename>
 		
-		<cfif FileExists(imagePath)>
-			<cflog file="wMidsPhotoDAO" text="already have an image for #imageFilename# url set to #imageUrl#">
+		<cfif FileExists(imagePath)>			
 			<cfset photo.setPHOTO_URL(imageUrl)>
 		<cfelse>
 	    <!--- no image exists, do the risp request --->
@@ -514,8 +513,6 @@
                           <cfset photo.setPHOTO_URL('')>
                       </cfcatch>
                       </cftry>
-                      
-                      <cflog file="wMidsPhotoDAO" text="no photo for #imageFilename# now downloaded and url set to #imageUrl#">
                       
                     </cfloop>           
                                                                                               
