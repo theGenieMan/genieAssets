@@ -234,6 +234,7 @@
             <cfset iRequestEnd=getTickCount()>
                                
             <cfset westMidsResult.status=searchResult.statusCode>
+			<cfset westMidsResult.overflow=false>
             
             <cfif westMidsResult.status is "200 OK">
               <cfset westMidsResult.searchOk=true>
@@ -268,6 +269,10 @@
                     
                     <cfloop from="1" to="#ArrayLen(addressArrayXml)#" index="iAddr">
                       <cfset ArrayAppend(westMidsResult.addresses,readWestMidsAddressSearchResult(xmlObj=addressArrayXml[iAddr]))>
+					  <cfif iAddr GT 500>					
+					  	  <cfset westMidsResult.overflow=true>
+						  <cfbreak>
+					  </cfif>  
                     </cfloop>
                     
                   <cfelse>
