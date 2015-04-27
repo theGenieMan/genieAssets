@@ -332,14 +332,15 @@
 		<cflog file="genie" type="information" text="updateSession (Service) before = #session.lastDPAUpdate#,#session.audit_code#,#session.audit_for#,#session.audit_details#,#session.ethnic_code#,#session.audit_for_collar#,#session.audit_for_force#">
 		</cfif>
 		---> 
-	 	
-	 	<cfset session.lastDPAUpdate=now()>		
-		<cfset session.audit_code=arguments.reasoncode>
-		<cfset session.audit_for=arguments.requestFor>
-		<cfset session.audit_details=arguments.reasonText>
-		<cfset session.ethnic_code=arguments.ethnicCode>
-		<cfset session.audit_for_collar=arguments.requestForCollar>
-		<cfset session.audit_for_force=arguments.requestForForce>
+	 	<cflock timeout=20 scope="Session" type="Exclusive">
+		 	<cfset session.lastDPAUpdate=now()>		
+			<cfset session.audit_code=arguments.reasoncode>
+			<cfset session.audit_for=arguments.requestFor>
+			<cfset session.audit_details=arguments.reasonText>
+			<cfset session.ethnic_code=arguments.ethnicCode>
+			<cfset session.audit_for_collar=arguments.requestForCollar>
+			<cfset session.audit_for_force=arguments.requestForForce>
+		</cflock>
 		
 		<!---	 
 		<cflog file="genie" type="information" text="updateSession (Service) after = #session.lastDPAUpdate#,#session.audit_code#,#session.audit_for#,#session.audit_details#,#session.ethnic_code#,#session.audit_for_collar#,#session.audit_for_force#">	
